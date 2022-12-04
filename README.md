@@ -36,13 +36,13 @@ Here are some ideas to get you started:
 <table>
     <tr>
         <td >
-            <center><img src="http://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=sunbos&theme=github" ></center>
+            <center><img src="http://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=sunbos&theme=github_dark" ></center>
         </td>
         <td >
-            <center><img src="http://github-profile-summary-cards.vercel.app/api/cards/productive-time?username=sunbos&theme=github&utcOffset=8" align="right" /></center>
+            <center><img src="http://github-profile-summary-cards.vercel.app/api/cards/productive-time?username=sunbos&theme=github_dark&utcOffset=8" align="right" /></center>
         </td>
         <td >
-            <center><img src="http://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=sunbos&theme=github" align="right" /></center>
+            <center><img src="http://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=sunbos&theme=github_dark" align="right" /></center>
         </td>
     </tr>
 </table>
