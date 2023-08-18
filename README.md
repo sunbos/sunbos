@@ -24,9 +24,9 @@ Here are some ideas to get you started:
 
 <table>
     <tr>
-        <td >
+<!--         <td >
             <center><img src="https://github-readme-stats.vercel.app/api?username=sunbos&show_icons=true&hide_border=true&theme=github_dark" ></center>
-        </td>
+        </td> -->
         <td >
             <center><img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=sunbos&theme=github_dark&show_icons=true" align="right" /></center>
         </td>
