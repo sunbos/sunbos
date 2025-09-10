@@ -20,7 +20,7 @@ Here are some ideas to get you started:
 -->
 
 # Visitor Count
-![Visitor Count](https://profile-counter.glitch.me/sunbos/count.svg)
+![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views&fontSize=150%)
 
 <table>
     <tr>
