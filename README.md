@@ -33,4 +33,5 @@ Here are some ideas to get you started:
 
 ## 🐍 Contribution Snake
 
-![snake gif](https://raw.githubusercontent.com/sunbos/sunbos/output/github-contribution-grid-snake.svg)
+![snake gif](https://raw.githubusercontent.com/sunbos/sunbos/output/github-contribution-grid-snake-dark.svg)
+
