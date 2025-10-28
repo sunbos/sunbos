@@ -30,8 +30,5 @@ Here are some ideas to get you started:
 ![Repos per Language](http://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=sunbos&theme=github_dark)
 ![Productive Time](http://github-profile-summary-cards.vercel.app/api/cards/productive-time?username=sunbos&theme=github_dark&utcOffset=8)
 ![Most Commit Language](http://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=sunbos&theme=github_dark)
-
-## 🐍 Contribution Snake
-
 ![snake gif](https://raw.githubusercontent.com/sunbos/sunbos/output/github-contribution-grid-snake-dark.svg)
 
