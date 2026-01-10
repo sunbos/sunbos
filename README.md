@@ -23,12 +23,9 @@ Here are some ideas to get you started:
 
 ![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views&fontSize=150%)
 
-<!-- Profile Details Card -->
-![Profile Details](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=sunbos&theme=github_dark&show_icons=true)
+<!-- GitHub Metrics -->
+![Metrics](https://github.com/sunbos/sunbos/blob/main/github-metrics.svg)
 
-<!-- Stats Cards -->
-![Repos per Language](http://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=sunbos&theme=github_dark)
-![Productive Time](http://github-profile-summary-cards.vercel.app/api/cards/productive-time?username=sunbos&theme=github_dark&utcOffset=8)
-![Most Commit Language](http://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=sunbos&theme=github_dark)
+<!-- Snake gif -->
 ![snake gif](https://raw.githubusercontent.com/sunbos/sunbos/output/github-contribution-grid-snake-dark.svg)
 
