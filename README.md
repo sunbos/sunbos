@@ -23,9 +23,8 @@ Here are some ideas to get you started:
 
 ![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views&fontSize=150%)
 
-<!-- GitHub Metrics -->
-![Metrics](https://github.com/sunbos/sunbos/blob/main/github-metrics.svg)
-
 <!-- Snake gif -->
 ![snake gif](https://raw.githubusercontent.com/sunbos/sunbos/output/github-contribution-grid-snake-dark.svg)
 
+<!-- GitHub Metrics -->
+![Metrics](https://github.com/sunbos/sunbos/blob/main/github-metrics.svg)
