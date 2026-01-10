@@ -10,6 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
+      issues: read
+      pull-requests: read
+      discussions: read
+      projects: read
+      packages: read
+      statuses: read
     steps:
       - uses: lowlighter/metrics@latest
         with:
