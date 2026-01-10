@@ -14,7 +14,6 @@ jobs:
       issues: read
       pull-requests: read
       discussions: read
-      projects: read
       packages: read
       statuses: read
     steps:
