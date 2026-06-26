@@ -28,6 +28,10 @@ jobs:
           config_timezone: Asia/Shanghai
           config_twemoji: yes
           config_octicon: yes
+          # Render plugin errors in the generated image instead of failing the workflow.
+          # Note: this does not fully prevent fatal failures when a plugin produces
+          # malformed data that crashes the EJS template rendering (see plugin_lines below).
+          plugins_errors_fatal: no
           plugin_languages: yes
           plugin_languages_limit: 8
           plugin_languages_details: bytes-size, percentage
@@ -50,9 +54,14 @@ jobs:
           plugin_topics_limit: 15
           plugin_topics_mode: icons
           plugin_topics_sort: starred
-          plugin_lines: yes
-          plugin_lines_sections: repositories
-          plugin_lines_repositories_limit: 4
+          # Disabled: plugin_lines with sections=repositories crashes on repos whose
+          # owner is null (deleted/transferred repos), producing
+          # "Cannot read properties of null (reading 'login')". The resulting
+          # incomplete data then crashes lines.ejs rendering with
+          # "Cannot read properties of undefined (reading 'includes')".
+          # plugin_lines: yes
+          # plugin_lines_sections: repositories
+          # plugin_lines_repositories_limit: 4
           plugin_stargazers: yes
           plugin_stargazers_charts: yes
           plugin_reactions: yes
@@ -67,7 +76,10 @@ jobs:
           # plugin_achievements: yes
           # plugin_achievements_display: compact
           plugin_notable: yes
-          plugin_notable_indepth: yes
+          # Disabled indepth mode: crashes on repos whose contributions API response
+          # is not an array, e.g. gdgshanghai/Gemma4-Hackathon-ShangHai produces
+          # "TypeError: contributions?.filter is not a function".
+          plugin_notable_indepth: no
           plugin_sponsors: no
           plugin_discussions: yes
           plugin_discussions_categories_limit: 8
