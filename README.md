@@ -34,4 +34,4 @@ Here are some ideas to get you started:
 ![snake gif](https://raw.githubusercontent.com/sunbos/sunbos/output/github-contribution-grid-snake-dark.svg)
 
 <!-- GitHub Metrics -->
-![Metrics](https://github.com/sunbos/sunbos/blob/main/github-metrics.svg)
+![Metrics](https://raw.githubusercontent.com/sunbos/sunbos/main/github-metrics.svg)
