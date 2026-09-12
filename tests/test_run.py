@@ -1,4 +1,10 @@
 import copy
+import contextlib
+import io
+import json
+import os
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -83,6 +89,110 @@ class PrepareTests(unittest.TestCase):
         result = run.prepare(CONFIG, README, self.client, api_key='test', force=True)
         self.assertEqual(result['status'], 'reviewed')
         self.model.assert_called_once()
+
+    @patch.object(run, 'push_expectation')
+    @patch.object(run, 'assert_base_unchanged')
+    def test_preview_uses_checkout_blocks_and_preserves_protection_without_writes(self, base_check, push_check):
+        self.proposal.return_value = {'number': 9, 'head_sha': 'abc', 'readme': '远端候选不应读取'}
+        self.collect.return_value['evidence'] = [{
+            'id': 'source:file', 'source_id': 'source',
+            'url': 'https://github.com/sunbos/demo/blob/abc/file.py', 'text': '公开新增验证证据',
+        }]
+        self.model.return_value = {'summary': '补充已验证的公开细节', 'updates': [{
+            'block_id': 'demo', 'markdown': '公开实践已有验证，并补充了离线故障测试。',
+            'evidence_ids': ['source:file'],
+        }]}
+        result = run.prepare(CONFIG, README, self.client, api_key='test', preview=True)
+        self.assertEqual(result['status'], 'preview')
+        self.assertFalse(result['publish'])
+        self.assertNotEqual(result['candidate'], README)
+        self.assertEqual(run.protected_text(result['candidate'], CONFIG), run.protected_text(README, CONFIG))
+        self.assertEqual(self.model.call_args.args[1]['demo'].strip(), '公开实践已有验证。')
+        self.model.assert_called_once()
+        self.proposal.assert_not_called()
+        base_check.assert_not_called()
+        push_check.assert_not_called()
+        self.client.write.assert_not_called()
+        for field in ['state', 'old_state', 'file_sha', 'expected_pr_head', 'proposal']:
+            self.assertNotIn(field, result)
+
+    def test_preview_unchanged_skips_model_without_key(self):
+        first = run.prepare(CONFIG, README, self.client, api_key='test')
+        self.load.return_value = (first['state'], 'file-sha')
+        self.model.reset_mock()
+        self.proposal.reset_mock()
+        result = run.prepare(CONFIG, README, self.client, preview=True)
+        self.assertEqual(result['status'], 'unchanged')
+        self.assertFalse(result['publish'])
+        self.model.assert_not_called()
+        self.proposal.assert_not_called()
+
+    def test_preview_force_runs_one_model_call_even_for_same_fingerprint(self):
+        first = run.prepare(CONFIG, README, self.client, api_key='test')
+        self.load.return_value = (first['state'], 'file-sha')
+        self.model.reset_mock()
+        result = run.prepare(CONFIG, README, self.client, api_key='test', preview=True, force=True)
+        self.assertEqual(result['status'], 'preview')
+        self.assertFalse(result['publish'])
+        self.assertEqual(result['candidate'], README)
+        self.model.assert_called_once()
+
+    @patch.object(run, 'save_state')
+    @patch.object(run, 'assert_base_unchanged')
+    def test_preview_cannot_be_checkpointed(self, base_check, save):
+        result = run.prepare(CONFIG, README, self.client, api_key='test', preview=True)
+        with self.assertRaises(ValueError):
+            run.checkpoint(self.client, CONFIG, result, 'a' * 40)
+        base_check.assert_not_called()
+        save.assert_not_called()
+
+    def test_preview_and_dry_run_are_mutually_exclusive_before_any_work(self):
+        with self.assertRaises(ValueError):
+            run.prepare(CONFIG, README, self.client, dry_run=True, preview=True)
+        self.load.assert_not_called()
+        self.collect.assert_not_called()
+        self.model.assert_not_called()
+
+    @patch.object(run, 'ensure_fresh')
+    @patch.object(run, 'assert_base_unchanged')
+    def test_preview_cli_writes_artifacts_without_publication_or_guards(self, base_check, freshness):
+        with tempfile.TemporaryDirectory(prefix='profile-preview-test-') as temporary:
+            root = Path(temporary)
+            config_file, output = root / 'config.json', root / 'output'
+            config_file.write_text(json.dumps(CONFIG), encoding='utf-8')
+            (root / 'README.md').write_text(README, encoding='utf-8')
+            environment = {'DEEPSEEK_API_KEY': 'test', 'GITHUB_OUTPUT': str(root / 'outputs'),
+                           'GITHUB_ENV': str(root / 'environment')}
+            with patch.object(run, 'ROOT', root), patch.object(run, 'CONFIG_PATH', config_file), \
+                    patch.object(run, 'GitHubClient', return_value=self.client), patch.dict(os.environ, environment, clear=True), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                run.main(['prepare', '--output-dir', str(output), '--preview'])
+                result = json.loads((output / 'result.json').read_text())
+                self.assertEqual(result['status'], 'preview')
+                self.assertFalse(result['publish'])
+                self.assertNotIn('state', result)
+                self.assertEqual((output / 'candidate.md').read_text(), README)
+                self.assertIn('没有新增能力证据', (output / 'pr-body.md').read_text())
+                self.assertEqual((root / 'outputs').read_text(), 'status=preview\npublish=false\n')
+                self.assertFalse((root / 'environment').exists())
+                with self.assertRaises(ValueError):
+                    run.main(['guard', '--output-dir', str(output)])
+                with self.assertRaises(ValueError):
+                    run.main(['checkpoint', '--output-dir', str(output)])
+            self.model.assert_called_once()
+            self.proposal.assert_not_called()
+            self.client.write.assert_not_called()
+            base_check.assert_not_called()
+            freshness.assert_not_called()
+
+    def test_preview_cli_rejects_dry_run_combination_before_reading_files(self):
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
+            run.main(['prepare', '--preview', '--dry-run', '--output-dir', '/unused'])
+        self.assertEqual(caught.exception.code, 2)
+        self.assertNotIn('unrecognized arguments', stderr.getvalue())
+        self.collect.assert_not_called()
+        self.model.assert_not_called()
 
     def test_closed_proposal_retains_trusted_branch_head(self):
         self.load.return_value = ({'pr_head_sha': 'a' * 40, 'fingerprint': 'old'}, 'b' * 40)

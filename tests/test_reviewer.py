@@ -254,6 +254,37 @@ class ApiTests(unittest.TestCase):
             self.assertIsNone(caught.exception.__cause__)
             build.return_value.open.assert_called_once()
 
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_http_errors_report_only_safe_status_and_never_retry(self, build):
+        for status in (400, 401, 402, 429, 500, 502, 503, 504):
+            with self.subTest(status=status):
+                build.return_value.open.reset_mock()
+                body = io.BytesIO(b"private-response test-secret-key")
+                build.return_value.open.side_effect = HTTPError(
+                    "https://api.deepseek.com/private-response", status,
+                    "private-response test-secret-key", {"Authorization": "test-secret-key"}, body)
+                with self.assertRaises(RuntimeError) as caught:
+                    self.call_review()
+                self.assertEqual(str(caught.exception),
+                                 f"DeepSeek request failed (HTTP {status}); no automatic retry was attempted")
+                self.assertIsNone(caught.exception.__cause__)
+                build.return_value.open.assert_called_once()
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_network_errors_report_class_without_raw_details(self, build):
+        for error in (URLError("private-response test-secret-key"),
+                      TimeoutError("private-response test-secret-key"),
+                      OSError("private-response test-secret-key")):
+            with self.subTest(error=type(error).__name__):
+                build.return_value.open.reset_mock()
+                build.return_value.open.side_effect = error
+                with self.assertRaises(RuntimeError) as caught:
+                    self.call_review()
+                self.assertEqual(str(caught.exception),
+                                 f"DeepSeek request failed ({type(error).__name__}); no automatic retry was attempted")
+                self.assertIsNone(caught.exception.__cause__)
+                build.return_value.open.assert_called_once()
+
     def test_redirect_handler_never_forwards_key(self):
         with self.assertRaises(HTTPError):
             reviewer._NoRedirect().http_error_302(None, None, 302, "redirect", {"location": "https://evil.example"})

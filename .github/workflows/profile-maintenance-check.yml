@@ -17,6 +17,11 @@ on:
       - 'scripts/profile_maintenance/**'
       - 'tests/**'
   workflow_dispatch:
+    inputs:
+      review_with_model:
+        description: '调用 DeepSeek 生成预览（会产生 API 费用，不发布或写状态）'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -38,7 +43,7 @@ jobs:
           git diff --check
 
   public-evidence-dry-run:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref != 'refs/heads/main')
+    if: (github.event_name == 'workflow_dispatch' && !inputs.review_with_model) || (github.event_name == 'push' && github.ref != 'refs/heads/main')
     needs: validate
     permissions:
       contents: read
@@ -58,3 +63,62 @@ jobs:
         run: |
           python -m scripts.profile_maintenance.run prepare \
             --dry-run --output-dir "$RUNNER_TEMP/profile-review"
+
+
+  deepseek-preview:
+    if: github.event_name == 'workflow_dispatch' && inputs.review_with_model
+    needs: validate
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Check the DeepSeek connection and available models
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          python - <<'PYTHON'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from scripts.profile_maintenance.reviewer import _NoRedirect
+          request = urllib.request.Request(
+              'https://api.deepseek.com/models',
+              headers={'Authorization': 'Bearer ' + os.environ['DEEPSEEK_API_KEY']},
+          )
+          try:
+              with urllib.request.build_opener(_NoRedirect()).open(request, timeout=30) as response:
+                  data = json.loads(response.read(65536))
+              models = [item['id'] for item in data['data']]
+              print('可用模型：' + ', '.join(models))
+          except urllib.error.HTTPError as error:
+              raise SystemExit('DeepSeek connection check failed: HTTP ' + str(error.code)) from None
+          except Exception as error:
+              raise SystemExit('DeepSeek connection check failed: ' + type(error).__name__) from None
+          PYTHON
+      - name: Review public evidence without publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
+        run: |
+          python -m scripts.profile_maintenance.run prepare \
+            --preview --output-dir "$RUNNER_TEMP/profile-preview"
+      - name: Save the validated preview
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: profile-review-preview-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/profile-preview/result.json
+            ${{ runner.temp }}/profile-preview/candidate.md
+            ${{ runner.temp }}/profile-preview/pr-body.md
+          retention-days: 7
+          if-no-files-found: error

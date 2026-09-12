@@ -323,6 +323,10 @@ def review(config, blocks, evidence, api_key):
             if result.status != 200 or result.geturl() != ENDPOINT:
                 raise RuntimeError("Unexpected provider HTTP response")
             raw = result.read(MAX_RESPONSE_BYTES + 1)
+    except HTTPError as error:
+        raise RuntimeError(f"DeepSeek request failed (HTTP {error.code}); no automatic retry was attempted") from None
+    except OSError as error:
+        raise RuntimeError(f"DeepSeek request failed ({type(error).__name__}); no automatic retry was attempted") from None
     except Exception:
         raise RuntimeError("DeepSeek request failed; no automatic retry was attempted") from None
     if len(raw) > MAX_RESPONSE_BYTES:

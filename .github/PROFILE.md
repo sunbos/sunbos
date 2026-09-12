@@ -69,11 +69,11 @@ gh run list --branch YOUR_BRANCH
 
 ## 启用 DeepSeek
 
-合并包含该工作流的 PR 后，再完成一次实际运行验证：
+密钥配置后可以先在 PR 分支生成真实 AI 预览；每日维护需合并到 main 后启用：
 
 1. 在 [仓库 Actions Secrets](https://github.com/sunbos/sunbos/settings/secrets/actions/new) 新建 **`DEEPSEEK_API_KEY`**，值填 DeepSeek 密钥。不要写入代码、Issue、PR 或聊天记录。
 2. 默认调用官方 `https://api.deepseek.com/chat/completions`，模型为 `deepseek-flash`。如需其他可用模型，在仓库 Actions Variables 中设置 **`DEEPSEEK_MODEL`**，不必修改代码。模型名单以 [DeepSeek 官方文档](https://api-docs.deepseek.com/quick_start/pricing/) 和账户可用型号为准。
-3. 在 Actions 的 **AI Profile Maintenance** 中手动运行，先保留 `dry_run=true`，验证公开采集。然后取消 dry_run，建立第一次 AI 审查基线。`force` 默认关闭；仅主动重新审查相同证据时打开，会调用模型。
+3. 合并前可运行 **Profile Maintenance Checks**，选择 PR 分支并开启 `review_with_model`：它会真实调用 DeepSeek，将校验通过的候选文案和依据保存为 7 天有效的预览附件，不发布 PR、不保存成功快照。合并后，在 **AI Profile Maintenance** 中先保留 `dry_run=true` 验证公开采集，再取消 dry_run 建立第一次 AI 审查基线。`force` 默认关闭；仅主动重新审查相同证据时打开，会调用模型。
 4. 确认审查完成、草稿 PR 或无需修改状态已保存，再等待每天北京时间 08:57 自动检查。非 main 分支的手动运行强制为 dry-run。
 
 当前每次最多一次模型请求，关闭 thinking，使用 JSON 模式，输出最多 4,096 tokens，输入序列化上限 180,000 字符，单次模型请求超时 60 秒。不会自动重试可能已经计费的调用。只读 GitHub 请求遇到临时网络问题、429 或 5xx 时最多尝试两次；写入请求不重试。缺少密钥、模型不可用、空输出、截断输出和校验失败均停止，不修改主页、不推进成功快照。
@@ -87,7 +87,7 @@ gh run list --branch YOUR_BRANCH
 - 同一维护流程串行执行；模型之后、发布之前以及记录状态之前重新核对 main README 和 PR head。实际推送还通过受信任的 pre-push 检查比较 Git 远端的分支 SHA 与准备阶段的预期值，阻止最后检查之后插入的人工提交被覆盖；发布后也会复核远端候选正文。main 与 PR 分支之间仍不是跨分支事务。
 - 失败不会标记为已审查。若模型已返回而 PR 发布或状态写入失败，下一次重试可能再次调用模型。先检查已有 PR 和失败步骤；若 PR 已发布但状态缺失，保护逻辑会停止，需先处理这个已有 PR，再删除遗留机器人分支后重试。保留 state 分支，不要日常删除。
 - 程序校验结构、来源引用和固定内容，**不能证明文案语义完全正确**。PR 需人工核对，尤其是“已合并”和“已发布”、“使用组件”和“实现框架”的区别。公开源码中的文本只作为数据，不执行其中的指令。
-- 维护任务使用本仓库 `GITHUB_TOKEN`，权限仅 `contents: write` 与 `pull-requests: write`；单元校验任务只有 `contents: read`；公开采集演练另需 `pull-requests: read`，两者均无 DeepSeek 密钥。仓库须允许 Actions 创建 PR。
+- 维护任务使用本仓库 `GITHUB_TOKEN`，权限仅 `contents: write` 与 `pull-requests: write`；单元校验任务只有 `contents: read`；公开采集演练另需 `pull-requests: read`，默认检查均无 DeepSeek 密钥；只有显式手动开启的真实预览任务接收模型密钥，并且仍只有读取权限。仓库须允许 Actions 创建 PR。
 - GitHub 当前可能将 `GITHUB_TOKEN` 创建／更新 PR 触发的检查标为等待人工批准；需要有写权限的用户点击批准。维护任务自身已运行相同的单元测试和内容校验。[GitHub 触发规则](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)
 - 停用：在 Actions 页面禁用 **AI Profile Maintenance**。删除 DeepSeek Secret 可阻止付费调用，但有待审查证据时任务会报配置缺失，因此暂停应使用禁用工作流。
 
