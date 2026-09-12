@@ -102,11 +102,16 @@ def prepare(config, readme, client, *, api_key='', dry_run=False, force=False, p
     }
 
 
+def escape_review_summary(summary):
+    """Render validated plain text consistently in PRs and workflow summaries."""
+    escaped = html.escape(summary).replace('@', '＠')
+    return ''.join('\\' + char if char in r'\`*_{}[]()#+-.!|>' else char for char in escaped)
+
+
 def review_body(result):
     """Describe only the reviewed evidence; no run timestamps or raw model HTML."""
     response = result['response']
-    summary = html.escape(response['summary']).replace('@', '＠')
-    summary = ''.join('\\' + char if char in r'\`*_{}[]()#+-.!|>' else char for char in summary)
+    summary = escape_review_summary(response['summary'])
     lines = [
         '根据选定公开项目的变化，更新主页中允许维护的描述。', '', summary, '',
         '核心项目和排序、流程示意、脱敏案例、访问徽章及图表均由程序保护。',
@@ -218,6 +223,8 @@ def main(argv=None):
         if os.getenv('GITHUB_STEP_SUMMARY'):
             with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as handle:
                 handle.write(message + '\n')
+                if result['status'] in {'reviewed', 'preview'}:
+                    handle.write('\n模型审阅说明：\n\n' + escape_review_summary(result['response']['summary']) + '\n')
     else:
         result = json.loads((output / 'result.json').read_text(encoding='utf-8'))
         if result['config_fingerprint'] != text_hash(json.dumps(config, sort_keys=True)):

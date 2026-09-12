@@ -222,6 +222,60 @@ class PrepareTests(unittest.TestCase):
         body = run.review_body(result)
         self.assertIn(r'PR \#10 与 schema\_hash 保持原状', body)
 
+    @patch.object(run, 'ensure_fresh')
+    @patch.object(run, 'assert_base_unchanged')
+    def test_reviewed_and_preview_no_updates_show_escaped_summary_without_source_or_diagnostics(self, base_check, freshness):
+        summary = 'PR #10 与 schema_hash 的证据需要人工核对，保留原文。'
+        def reviewed(*args, diagnostics=None):
+            if diagnostics is not None:
+                diagnostics['model_content'] = 'UNVALIDATED_DIAGNOSTIC'
+            return {'summary': summary, 'updates': []}
+        self.model.side_effect = reviewed
+        self.collect.return_value['evidence'] = [{
+            'id': 'source:file', 'source_id': 'source',
+            'url': 'https://github.com/sunbos/demo/blob/abc/file.py', 'text': 'SOURCE_SNIPPET_ONLY',
+        }]
+        for mode in ([], ['--preview']):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory(prefix='profile-summary-test-') as temporary:
+                root = Path(temporary)
+                config_file, output, report = root / 'config.json', root / 'output', root / 'summary.md'
+                config_file.write_text(json.dumps(CONFIG), encoding='utf-8')
+                (root / 'README.md').write_text(README, encoding='utf-8')
+                environment = {'DEEPSEEK_API_KEY': 'fixture-secret-key', 'GITHUB_STEP_SUMMARY': str(report)}
+                with patch.object(run, 'ROOT', root), patch.object(run, 'CONFIG_PATH', config_file), \
+                        patch.object(run, 'GitHubClient', return_value=self.client), \
+                        patch.dict(os.environ, environment, clear=True), contextlib.redirect_stdout(io.StringIO()):
+                    run.main(['prepare', '--output-dir', str(output)] + mode)
+                escaped = r'PR \#10 与 schema\_hash 的证据需要人工核对，保留原文。'
+                rendered = report.read_text(encoding='utf-8')
+                self.assertIn(escaped, rendered)
+                self.assertIn(escaped, (output / 'pr-body.md').read_text(encoding='utf-8'))
+                for excluded in ('SOURCE_SNIPPET_ONLY', 'UNVALIDATED_DIAGNOSTIC', 'fixture-secret-key', '固定案例'):
+                    self.assertNotIn(excluded, rendered)
+                self.assertFalse(json.loads((output / 'result.json').read_text())['publish'])
+        self.client.write.assert_not_called()
+
+    def test_unchanged_and_dry_run_summaries_remain_short(self):
+        messages = {
+            'unchanged': '证据未变化，已跳过模型和写入。\n',
+            'dry-run': '公开证据采集完成；dry-run 未调用模型或写入远端。\n',
+        }
+        for status, expected in messages.items():
+            with self.subTest(status=status), tempfile.TemporaryDirectory(prefix='profile-summary-short-') as temporary:
+                root = Path(temporary)
+                config_file, report = root / 'config.json', root / 'summary.md'
+                config_file.write_text(json.dumps(CONFIG), encoding='utf-8')
+                (root / 'README.md').write_text(README, encoding='utf-8')
+                result = {'status': status, 'publish': False,
+                          'response': {'summary': '不得显示旧模型结果', 'updates': []}}
+                with patch.object(run, 'ROOT', root), patch.object(run, 'CONFIG_PATH', config_file), \
+                        patch.object(run, 'GitHubClient', return_value=self.client), \
+                        patch.object(run, 'prepare', return_value=result), \
+                        patch.dict(os.environ, {'GITHUB_STEP_SUMMARY': str(report)}, clear=True), \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    run.main(['prepare', '--dry-run', '--output-dir', str(root / 'output')])
+                self.assertEqual(report.read_text(encoding='utf-8'), expected)
+
     def test_closed_proposal_retains_trusted_branch_head(self):
         self.load.return_value = ({'pr_head_sha': 'a' * 40, 'fingerprint': 'old'}, 'b' * 40)
         result = run.prepare(CONFIG, README, self.client, api_key='test')

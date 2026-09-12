@@ -28,7 +28,7 @@
 - `scripts/profile_maintenance/run.py`：命令 `prepare --output-dir PATH [--dry-run] [--force]` 采集与审查、写本地候选与待保存状态；命令 `checkpoint --output-dir PATH --pr-head-sha SHA` 在 PR 发布成功或无需变更后保存状态。环境变量 `GH_TOKEN`、`DEEPSEEK_API_KEY`、可选 `DEEPSEEK_MODEL`；不记录密钥和原始 HTTP 错误响应。
 - `.github/profile-maintenance.json`：固定允许来源、文件、区域和模型；README 标记为 `<!-- profile-ai:ID:start -->` / `<!-- profile-ai:ID:end -->`。
 - `.github/workflows/profile-maintenance.yml`：每日北京时间 08:57、手动 dry-run/force；运行单元测试→prepare→受限文件 PR→checkpoint。状态独立分支不改变 main，PR Action 限 README。
-- `.github/workflows/profile-maintenance-check.yml`：无密钥的单元测试与标记检查。
+- `.github/workflows/profile-maintenance-check.yml`：无密钥的单元测试、标记与公开采集检查；显式手动选择时，使用密钥进行只读模型预览。
 - `.github/PROFILE.md`：选型、来源范围、启用和停用、故障与私有案例规则。
 
 ## Task 1: 证据采集
@@ -42,7 +42,7 @@
 
 - [x] 写 `tests/test_reviewer.py`：合法局部变更保留其余字节、未知/重复区域和跨区域证据拒绝、空 JSON/截断拒绝、HTML/新标题/外链/明显密钥拒绝、删空或过度缩减拒绝、无 updates 不改变原文。
 - [x] 运行 `python3 -m unittest discover -s tests -p test_reviewer.py -v`，确认缺少实现导致失败。
-- [x] 实现 `reviewer.py`，官方接口固定 HTTPS，默认 `deepseek-flash`、JSON 模式、关闭 thinking、无工具、单次请求。
+- [x] 实现 `reviewer.py`，官方接口固定 HTTPS，默认 `deepseek-v4-pro`、JSON 模式、开启 thinking、无工具、单次请求。
 - [x] 重跑相同测试，确认全部通过。
 
 ## Task 3: 持久状态与并发保护
@@ -64,3 +64,7 @@
 ## Verification record
 
 2026-09-13: 112 tests passed locally, including real temporary Git repositories for concurrent push protection. actionlint and git diff --check passed. GitHub Markdown rendering preserved one seven-row table and six picture groups. Public evidence collection covered six sources and 21 evidence items (17 selected files plus four PR facts); model payload is bounded and excludes protected cases. Live provider and scheduled publication remain pending the DeepSeek Secret and default-branch merge.
+
+2026-09-13 provider verification: the DeepSeek Secret is valid. The initial Flash response failed format/content validation; a subsequent Flash preview passed structural checks but contained an incorrect retry claim and removed the confirmed partial-failure recovery capability. Neither suggestion was applied. The collector now includes errors.py, recovery.js and its tests; protected_phrases rejects the exact prior deletion. DeepSeek V4 Pro with thinking completed a real 24-evidence review and returned no updates, leaving the candidate identical to the base README. Run: https://github.com/sunbos/sunbos/actions/runs/34721330457 . Replaying that real snapshot with an in-memory successful checkpoint made zero additional model calls and zero remote writes. All actual-review explanations now appear in the Actions summary, including no-change decisions. Scheduled publication remains pending the default-branch merge; preview does not create a checkpoint.
+
+Final local verification: 146 tests passed, including the known bad-candidate replay and visible no-change review explanations; actionlint, block validation and git diff --check passed.
