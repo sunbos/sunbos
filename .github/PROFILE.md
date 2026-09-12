@@ -73,7 +73,7 @@ gh run list --branch YOUR_BRANCH
 
 1. 在 [仓库 Actions Secrets](https://github.com/sunbos/sunbos/settings/secrets/actions/new) 新建 **`DEEPSEEK_API_KEY`**，值填 DeepSeek 密钥。不要写入代码、Issue、PR 或聊天记录。
 2. 默认调用官方 `https://api.deepseek.com/chat/completions`，模型为 `deepseek-flash`。如需其他可用模型，在仓库 Actions Variables 中设置 **`DEEPSEEK_MODEL`**，不必修改代码。模型名单以 [DeepSeek 官方文档](https://api-docs.deepseek.com/quick_start/pricing/) 和账户可用型号为准。
-3. 合并前可运行 **Profile Maintenance Checks**，选择 PR 分支并开启 `review_with_model`：它会真实调用 DeepSeek，将校验通过的候选文案和依据保存为 7 天有效的预览附件，不发布 PR、不保存成功快照。合并后，在 **AI Profile Maintenance** 中先保留 `dry_run=true` 验证公开采集，再取消 dry_run 建立第一次 AI 审查基线。`force` 默认关闭；仅主动重新审查相同证据时打开，会调用模型。
+3. 合并前可运行 **Profile Maintenance Checks**，选择 PR 分支并开启 `review_with_model`：它会真实调用 DeepSeek，将校验通过的候选文案和依据保存为 7 天有效的预览附件，不发布 PR、不保存成功快照。失败时保留脱敏的 `review-diagnostics.json`，记录拒绝原因、模型内容和用量；未经校验的内容仅用于排查。合并后，在 **AI Profile Maintenance** 中先保留 `dry_run=true` 验证公开采集，再取消 dry_run 建立第一次 AI 审查基线。`force` 默认关闭；仅主动重新审查相同证据时打开，会调用模型。
 4. 确认审查完成、草稿 PR 或无需修改状态已保存，再等待每天北京时间 08:57 自动检查。非 main 分支的手动运行强制为 dry-run。
 
 当前每次最多一次模型请求，关闭 thinking，使用 JSON 模式，输出最多 4,096 tokens，输入序列化上限 180,000 字符，单次模型请求超时 60 秒。不会自动重试可能已经计费的调用。只读 GitHub 请求遇到临时网络问题、429 或 5xx 时最多尝试两次；写入请求不重试。缺少密钥、模型不可用、空输出、截断输出和校验失败均停止，不修改主页、不推进成功快照。

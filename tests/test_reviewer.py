@@ -285,6 +285,121 @@ class ApiTests(unittest.TestCase):
                 self.assertIsNone(caught.exception.__cause__)
                 build.return_value.open.assert_called_once()
 
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_successful_diagnostics_record_model_content_and_numeric_usage(self, build):
+        envelope = json.loads(wire_response())
+        envelope["usage"] = {"prompt_tokens": 7, "completion_tokens": 3, "total_tokens": 10,
+                             "prompt_cache_hit_tokens": 5, "raw": "test-secret-key"}
+        build.return_value.open.return_value = FakeResponse(json.dumps(envelope).encode())
+        diagnostics = {"stale": "test-secret-key"}
+        result = reviewer.review(dict(CONFIG, model="chosen-model"), {"sdk": OLD}, EVIDENCE,
+                                 "test-secret-key", diagnostics=diagnostics)
+        self.assertEqual(result, update())
+        self.assertEqual(diagnostics["requested_model"], "chosen-model")
+        self.assertEqual(diagnostics["stage"], "complete")
+        self.assertEqual(diagnostics["finish_reason"], "stop")
+        self.assertEqual(diagnostics["usage"], {"prompt_tokens": 7, "completion_tokens": 3, "total_tokens": 10})
+        self.assertEqual(json.loads(diagnostics["model_content"]), update())
+        self.assertNotIn("validation_error", diagnostics)
+        self.assertNotIn("test-secret-key", json.dumps(diagnostics))
+        build.return_value.open.assert_called_once()
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_rejected_content_is_preserved_with_fixed_local_validation_error(self, build):
+        rejected = update()
+        rejected["summary"] = "[unsupported](https://example.invalid/)"
+        content = json.dumps(rejected)
+        build.return_value.open.return_value = FakeResponse(wire_response(content))
+        diagnostics = {}
+        with self.assertRaisesRegex(ValueError, "invalid or unsafe review response"):
+            reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "test-secret-key", diagnostics=diagnostics)
+        self.assertEqual(diagnostics["model_content"], content)
+        self.assertEqual(diagnostics["stage"], "validation")
+        self.assertEqual(diagnostics["validation_error"],
+                         "Review summary must be plain text without links or formatting")
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_diagnostics_redact_exact_key_and_secret_patterns_before_json_parsing(self, build):
+        content = "rejected test-secret-key sk-" + "a" * 30 + " ghp_" + "b" * 30
+        build.return_value.open.return_value = FakeResponse(wire_response(content))
+        diagnostics = {}
+        with self.assertRaises(ValueError):
+            reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "test-secret-key", diagnostics=diagnostics)
+        captured = json.dumps(diagnostics)
+        for secret in ("test-secret-key", "sk-" + "a" * 30, "ghp_" + "b" * 30):
+            self.assertNotIn(secret, captured)
+        self.assertIn("[REDACTED]", diagnostics["model_content"])
+        self.assertEqual(diagnostics["stage"], "model_json")
+        self.assertEqual(diagnostics["validation_error"], "Invalid JSON review response")
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_diagnostic_content_remains_bounded_after_redaction_expands_text(self, build):
+        build.return_value.open.return_value = FakeResponse(wire_response("x" * 200000))
+        diagnostics = {}
+        with self.assertRaises(ValueError):
+            reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "x", diagnostics=diagnostics)
+        self.assertLessEqual(len(diagnostics["model_content"].encode()), reviewer.MAX_RESPONSE_BYTES)
+        self.assertNotIn("x", diagnostics["model_content"])
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_invalid_envelope_reports_stage_without_recording_raw_body(self, build):
+        build.return_value.open.return_value = FakeResponse(b"private-response test-secret-key")
+        diagnostics = {}
+        with self.assertRaises(ValueError):
+            reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "test-secret-key", diagnostics=diagnostics)
+        self.assertEqual(diagnostics["stage"], "response_envelope")
+        self.assertEqual(diagnostics["validation_error"], "Invalid JSON review response")
+        self.assertNotIn("model_content", diagnostics)
+        self.assertNotIn("private-response", json.dumps(diagnostics))
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_incomplete_model_response_preserves_content_and_finish_reason(self, build):
+        build.return_value.open.return_value = FakeResponse(wire_response("partial result", finish_reason="length"))
+        diagnostics = {}
+        with self.assertRaises(ValueError):
+            reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "test-secret-key", diagnostics=diagnostics)
+        self.assertEqual(diagnostics["stage"], "response_choice")
+        self.assertEqual(diagnostics["finish_reason"], "length")
+        self.assertEqual(diagnostics["model_content"], "partial result")
+        self.assertEqual(diagnostics["validation_error"], "Incomplete model response")
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_diagnostics_never_record_raw_http_error_body_headers_or_request(self, build):
+        build.return_value.open.side_effect = HTTPError(
+            "https://api.deepseek.com/private-response", 401, "private-response test-secret-key",
+            {"Authorization": "test-secret-key"}, io.BytesIO(b"private-response test-secret-key"))
+        diagnostics = {}
+        with self.assertRaisesRegex(RuntimeError, "HTTP 401"):
+            reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "test-secret-key", diagnostics=diagnostics)
+        self.assertEqual(diagnostics["stage"], "request")
+        self.assertEqual(diagnostics["validation_error"], "DeepSeek HTTP request failed")
+        self.assertLessEqual(set(diagnostics), {"stage", "requested_model", "validation_error"})
+        self.assertNotIn("private-response", json.dumps(diagnostics))
+        self.assertNotIn("test-secret-key", json.dumps(diagnostics))
+        build.return_value.open.assert_called_once()
+
+    @patch("scripts.profile_maintenance.reviewer._validate_updates", side_effect=ValueError("private-response test-secret-key"))
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_diagnostics_do_not_copy_arbitrary_exception_details(self, build, validate):
+        build.return_value.open.return_value = FakeResponse(wire_response())
+        diagnostics = {}
+        with self.assertRaises(ValueError):
+            reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "test-secret-key", diagnostics=diagnostics)
+        self.assertEqual(diagnostics["validation_error"], "Invalid or unsafe model response")
+        self.assertNotIn("private-response", json.dumps(diagnostics))
+        self.assertNotIn("test-secret-key", json.dumps(diagnostics))
+
+    @patch("scripts.profile_maintenance.reviewer.urllib.request.build_opener")
+    def test_diagnostic_usage_excludes_strings_booleans_and_other_fields(self, build):
+        envelope = json.loads(wire_response())
+        envelope["usage"] = {"prompt_tokens": "test-secret-key", "completion_tokens": True,
+                             "total_tokens": 4, "other": "private-response"}
+        build.return_value.open.return_value = FakeResponse(json.dumps(envelope).encode())
+        diagnostics = {}
+        reviewer.review(CONFIG, {"sdk": OLD}, EVIDENCE, "test-secret-key", diagnostics=diagnostics)
+        self.assertEqual(diagnostics["usage"], {"total_tokens": 4})
+
     def test_redirect_handler_never_forwards_key(self):
         with self.assertRaises(HTTPError):
             reviewer._NoRedirect().http_error_302(None, None, 302, "redirect", {"location": "https://evil.example"})

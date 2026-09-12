@@ -283,8 +283,55 @@ def _bounded_int(config, key, default, maximum):
     return value
 
 
-def review(config, blocks, evidence, api_key):
+_DIAGNOSTIC_VALIDATION_ERRORS = frozenset({
+    "Invalid JSON review response", "Incomplete model response", "Empty or invalid model response",
+    "Invalid editable block configuration", "Invalid minimum block length",
+    "Editable block set does not match configuration", "Evidence must be a list",
+    "Invalid or duplicate public evidence", "Invalid review response schema",
+    "Invalid review summary", "Review summary must be plain text without links or formatting",
+    "Invalid update schema", "Invalid or duplicate update", "Update references unknown block",
+    "Update exceeds block length limits", "Update references evidence outside its block",
+    "Forbidden structure or sensitive text in editable block", "Unsupported Markdown link syntax",
+    "Only public GitHub links are allowed", "Update contains a link without cited evidence",
+    "Table layout cannot change inside an editable block",
+})
+
+
+def _diagnostic_text(text, api_key, limit=MAX_RESPONSE_BYTES):
+    """Keep model output inspectable without copying credentials into artifacts."""
+    redacted = _SECRET.sub("[REDACTED]", text.replace(api_key, "[REDACTED]"))
+    return redacted.encode("utf-8", errors="replace")[:limit].decode("utf-8", errors="ignore")
+
+
+def _capture_response_diagnostics(diagnostics, envelope, api_key):
+    if diagnostics is None or not isinstance(envelope, dict):
+        return
+    usage = envelope.get("usage")
+    diagnostics["usage"] = {}
+    if isinstance(usage, dict):
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+            value = usage.get(key)
+            if ((type(value) is int and value >= 0)
+                    or (type(value) is float and math.isfinite(value) and value >= 0)):
+                diagnostics["usage"][key] = value
+    choices = envelope.get("choices")
+    if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
+        return
+    choice = choices[0]
+    if isinstance(choice.get("finish_reason"), str):
+        diagnostics["finish_reason"] = _diagnostic_text(choice["finish_reason"], api_key, 128)
+    message = choice.get("message")
+    if isinstance(message, dict) and isinstance(message.get("content"), str):
+        diagnostics["model_content"] = _diagnostic_text(message["content"], api_key)
+
+
+def review(config, blocks, evidence, api_key, *, diagnostics=None):
     """Send exactly one bounded request containing allowlisted public data only."""
+    if diagnostics is not None:
+        if not isinstance(diagnostics, dict):
+            raise ValueError("Diagnostics must be a dictionary")
+        diagnostics.clear()
+        diagnostics["stage"] = "preparation"
     specs = _block_config(config)
     if not isinstance(api_key, str) or not api_key or any(c.isspace() for c in api_key):
         raise ValueError("DeepSeek API key is required")
@@ -306,6 +353,8 @@ def review(config, blocks, evidence, api_key):
     model = os.environ.get("DEEPSEEK_MODEL") or config.get("model", "deepseek-flash")
     if not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}", model):
         raise ValueError("Invalid DeepSeek model name")
+    if diagnostics is not None:
+        diagnostics["requested_model"] = _diagnostic_text(model, api_key, 128)
     payload = {"model": model, "messages": [
         {"role": "system", "content": _SYSTEM},
         {"role": "user", "content": json.dumps({"blocks": public_blocks, "evidence": public_evidence}, ensure_ascii=False)},
@@ -317,6 +366,8 @@ def review(config, blocks, evidence, api_key):
     timeout = _bounded_int(config, "timeout_seconds", 60, 120)
     request = urllib.request.Request(ENDPOINT, data=serialized.encode("utf-8"), method="POST",
                                      headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"})
+    if diagnostics is not None:
+        diagnostics["stage"] = "request"
     try:
         opener = urllib.request.build_opener(_NoRedirect())
         with opener.open(request, timeout=timeout) as result:
@@ -324,15 +375,28 @@ def review(config, blocks, evidence, api_key):
                 raise RuntimeError("Unexpected provider HTTP response")
             raw = result.read(MAX_RESPONSE_BYTES + 1)
     except HTTPError as error:
+        if diagnostics is not None:
+            diagnostics["validation_error"] = "DeepSeek HTTP request failed"
         raise RuntimeError(f"DeepSeek request failed (HTTP {error.code}); no automatic retry was attempted") from None
     except OSError as error:
+        if diagnostics is not None:
+            diagnostics["validation_error"] = "DeepSeek network request failed"
         raise RuntimeError(f"DeepSeek request failed ({type(error).__name__}); no automatic retry was attempted") from None
     except Exception:
+        if diagnostics is not None:
+            diagnostics["validation_error"] = "DeepSeek request failed"
         raise RuntimeError("DeepSeek request failed; no automatic retry was attempted") from None
+    if diagnostics is not None:
+        diagnostics["stage"] = "response_envelope"
     if len(raw) > MAX_RESPONSE_BYTES:
+        if diagnostics is not None:
+            diagnostics["validation_error"] = "DeepSeek response exceeds size limit"
         raise ValueError("DeepSeek response exceeds size limit")
     try:
         envelope = _json_loads(raw.decode("utf-8"))
+        _capture_response_diagnostics(diagnostics, envelope, api_key)
+        if diagnostics is not None:
+            diagnostics["stage"] = "response_choice"
         choices = envelope["choices"]
         if not isinstance(choices, list) or len(choices) != 1 or choices[0].get("finish_reason") != "stop":
             raise ValueError("Incomplete model response")
@@ -340,7 +404,20 @@ def review(config, blocks, evidence, api_key):
         content = message["content"]
         if message.get("role") != "assistant" or message.get("tool_calls") or not isinstance(content, str) or not content.strip():
             raise ValueError("Empty or invalid model response")
+        if diagnostics is not None:
+            diagnostics["stage"] = "model_json"
         response = _json_loads(content)
-        return _validate_updates(config, blocks, public_evidence, response)
-    except (KeyError, TypeError, ValueError, AttributeError, UnicodeError):
+        if diagnostics is not None:
+            diagnostics["stage"] = "validation"
+        validated = _validate_updates(config, blocks, public_evidence, response)
+        if diagnostics is not None:
+            diagnostics["stage"] = "complete"
+        return validated
+    except (KeyError, TypeError, ValueError, AttributeError, UnicodeError) as error:
+        if diagnostics is not None:
+            local_message = error.args[0] if type(error) is ValueError and len(error.args) == 1 else None
+            diagnostics["validation_error"] = (
+                local_message if isinstance(local_message, str) and local_message in _DIAGNOSTIC_VALIDATION_ERRORS
+                else "Invalid or unsafe model response"
+            )
         raise ValueError("DeepSeek returned an invalid or unsafe review response") from None

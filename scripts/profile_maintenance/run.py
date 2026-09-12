@@ -42,7 +42,7 @@ def push_expectation(client, config, old_state):
     return actual
 
 
-def prepare(config, readme, client, *, api_key='', dry_run=False, force=False, preview=False):
+def prepare(config, readme, client, *, api_key='', dry_run=False, force=False, preview=False, diagnostics=None):
     """Pure preparation apart from GETs and one optional model call; no writes."""
     if dry_run and preview:
         raise ValueError('dry-run 与 preview 不能同时使用。')
@@ -74,7 +74,8 @@ def prepare(config, readme, client, *, api_key='', dry_run=False, force=False, p
         raise ValueError('机器人 PR 的固定内容与主页不一致，请先人工处理。')
     if not api_key:
         raise ValueError('检测到待审查证据，请先在 GitHub Secret 配置 DEEPSEEK_API_KEY。')
-    response = review(config, extract_blocks(current, config), collected['evidence'], api_key)
+    options = {'diagnostics': diagnostics} if diagnostics is not None else {}
+    response = review(config, extract_blocks(current, config), collected['evidence'], api_key, **options)
     candidate = apply_updates(current, config, collected['evidence'], response)
     if preview:
         return {
@@ -181,8 +182,16 @@ def main(argv=None):
         # Read-only modes may intentionally inspect a proposed README before merge.
         if not args.dry_run and not args.preview:
             assert_base_unchanged(client, config, readme)
-        result = prepare(config, readme, client, api_key=os.getenv('DEEPSEEK_API_KEY', ''),
-                         dry_run=args.dry_run, force=args.force, preview=args.preview)
+        diagnostics = {} if args.preview else None
+        try:
+            result = prepare(config, readme, client, api_key=os.getenv('DEEPSEEK_API_KEY', ''),
+                             dry_run=args.dry_run, force=args.force, preview=args.preview,
+                             diagnostics=diagnostics)
+        finally:
+            if diagnostics is not None:
+                output.mkdir(parents=True, exist_ok=True)
+                (output / 'review-diagnostics.json').write_text(
+                    json.dumps(diagnostics, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         result['config_fingerprint'] = text_hash(json.dumps(config, sort_keys=True))
         output.mkdir(parents=True, exist_ok=True)
         (output / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')

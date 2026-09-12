@@ -185,6 +185,29 @@ class PrepareTests(unittest.TestCase):
             base_check.assert_not_called()
             freshness.assert_not_called()
 
+    def test_preview_failure_saves_diagnostics_without_candidate_or_state(self):
+        def rejected_review(*args, diagnostics=None):
+            if diagnostics is not None:
+                diagnostics.update(stage='validation', validation_error='Update exceeds block length limits')
+            raise ValueError('invalid review')
+        self.model.side_effect = rejected_review
+        with tempfile.TemporaryDirectory(prefix='profile-preview-failure-') as temporary:
+            root = Path(temporary)
+            config_file, output = root / 'config.json', root / 'output'
+            config_file.write_text(json.dumps(CONFIG), encoding='utf-8')
+            (root / 'README.md').write_text(README, encoding='utf-8')
+            with patch.object(run, 'ROOT', root), patch.object(run, 'CONFIG_PATH', config_file), \
+                    patch.object(run, 'GitHubClient', return_value=self.client), \
+                    patch.dict(os.environ, {'DEEPSEEK_API_KEY': 'test'}, clear=True):
+                with self.assertRaises(ValueError):
+                    run.main(['prepare', '--output-dir', str(output), '--preview'])
+            self.assertTrue((output / 'review-diagnostics.json').exists())
+            diagnostic = json.loads((output / 'review-diagnostics.json').read_text())
+            self.assertEqual(diagnostic['stage'], 'validation')
+            self.assertFalse((output / 'candidate.md').exists())
+            self.assertFalse((output / 'result.json').exists())
+        self.client.write.assert_not_called()
+
     def test_preview_cli_rejects_dry_run_combination_before_reading_files(self):
         stderr = io.StringIO()
         with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
