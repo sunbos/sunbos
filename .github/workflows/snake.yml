@@ -2,28 +2,48 @@ name: Generate snake animation on your profile
 
 on:
   schedule:
-    # Run every 6 hours
-    - cron: "0 */6 * * *"
+    - cron: "43 */6 * * *"
   workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: profile-snake-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
+    permissions:
+      contents: write
     steps:
-      - name: Generate snake animation
-        uses: Platane/snk@v3
+      - name: Generate light and dark SVG animations
+        uses: Platane/snk/svg-only@d8f6715049803e982ee5ff501b6b9b7d5deeb09b # v3.5.0
         with:
-          github_user_name: sunbos
+          github_user_name: ${{ github.repository_owner }}
           outputs: |
             dist/github-contribution-grid-snake.svg
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push files to the output branch
-        uses: crazy-max/ghaction-github-pages@v3
+      - name: Validate generated SVGs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          for name in ("github-contribution-grid-snake.svg", "github-contribution-grid-snake-dark.svg"):
+              path = Path("dist") / name
+              if ET.parse(path).getroot().tag != "{http://www.w3.org/2000/svg}svg":
+                  raise SystemExit(f"Invalid SVG: {path}")
+          PY
+
+      # Feature-branch dispatches validate generation without replacing live assets.
+      - name: Publish animations to the output branch
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: crazy-max/ghaction-github-pages@1d6ee9b181a81033a16bd707a1401afa978daab4 # v5.0.0
         with:
           target_branch: output
           build_dir: dist
