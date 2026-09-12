@@ -1,0 +1,114 @@
+name: AI Profile Maintenance
+
+on:
+  schedule:
+    - cron: '57 0 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只采集公开证据，不调用模型、不写入仓库'
+        type: boolean
+        default: true
+      force:
+        description: '即使证据相同也重新审查（需要关闭 dry_run，会调用模型）'
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: profile-maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    if: github.repository == 'sunbos/sunbos'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PROFILE_PROPOSAL_BRANCH: automation/profile-maintenance
+      DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
+    steps:
+      - name: Check out the requested branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Test the maintenance boundaries
+        run: |
+          echo "REVIEW_DIR=$RUNNER_TEMP/profile-maintenance" >> "$GITHUB_ENV"
+          python -m unittest discover -s tests -v
+          python -m scripts.profile_maintenance.run validate
+
+      - name: Collect evidence and review only changed inputs
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          REQUEST_DRY_RUN: ${{ inputs.dry_run }}
+          REQUEST_FORCE: ${{ inputs.force }}
+          REQUEST_REF: ${{ github.ref }}
+        shell: bash
+        run: |
+          args=(prepare --output-dir "$REVIEW_DIR")
+          if [[ "$REQUEST_DRY_RUN" == "true" || "$REQUEST_REF" != "refs/heads/main" ]]; then
+            args+=(--dry-run)
+          fi
+          if [[ "$REQUEST_FORCE" == "true" ]]; then
+            args+=(--force)
+          fi
+          python -m scripts.profile_maintenance.run "${args[@]}"
+
+      - name: Recheck the base and bot branch before publication
+        if: steps.prepare.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m scripts.profile_maintenance.run guard --output-dir "$REVIEW_DIR"
+          cp "$REVIEW_DIR/candidate.md" README.md
+          git diff --check
+          mkdir -p "$RUNNER_TEMP/profile-maintenance-hooks"
+          cp scripts/profile_maintenance/pre_push.py "$RUNNER_TEMP/profile-maintenance-hooks/check.py"
+          cat > "$RUNNER_TEMP/profile-maintenance-hooks/pre-push" <<'HOOK'
+          #!/bin/sh
+          exec python "$RUNNER_TEMP/profile-maintenance-hooks/check.py"
+          HOOK
+          chmod 700 "$RUNNER_TEMP/profile-maintenance-hooks/pre-push"
+          git config --local core.hooksPath "$RUNNER_TEMP/profile-maintenance-hooks"
+
+      - name: Create or update the single review PR
+        if: steps.prepare.outputs.publish == 'true'
+        id: proposal
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: automation/profile-maintenance
+          add-paths: README.md
+          commit-message: 'docs: refresh evidence-backed profile descriptions'
+          title: 'docs: review profile updates from public project evidence'
+          body-path: ${{ runner.temp }}/profile-maintenance/pr-body.md
+          draft: always-true
+          sign-commits: false
+          delete-branch: false
+          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+
+      - name: Save successfully reviewed evidence, including no-change decisions
+        if: steps.prepare.outputs.status == 'reviewed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_HEAD_SHA: ${{ steps.proposal.outputs.pull-request-head-sha }}
+        run: |
+          python -m scripts.profile_maintenance.run checkpoint \
+            --output-dir "$REVIEW_DIR" --pr-head-sha "$PR_HEAD_SHA"
