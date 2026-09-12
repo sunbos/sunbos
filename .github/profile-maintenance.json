@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "policy_version": "2026-09-13.1",
+  "owner": "sunbos",
+  "repository": "sunbos/sunbos",
+  "base_branch": "main",
+  "proposal_branch": "automation/profile-maintenance",
+  "state_branch": "automation/profile-maintenance-state",
+  "model": "deepseek-flash",
+  "max_input_chars": 180000,
+  "max_tokens": 4096,
+  "timeout_seconds": 60,
+  "blocks": {
+    "sqlseed-main": {
+      "source_ids": [
+        "sqlseed-main"
+      ],
+      "max_chars": 1800,
+      "min_ratio": 0.9
+    },
+    "sqlseed-workbench": {
+      "source_ids": [
+        "sqlseed-workbench",
+        "sqlseed-main"
+      ],
+      "max_chars": 2800,
+      "min_ratio": 0.9
+    },
+    "dify-sdk": {
+      "source_ids": [
+        "dify-sdk"
+      ],
+      "max_chars": 1500,
+      "min_ratio": 0.9
+    },
+    "siq": {
+      "source_ids": [
+        "siq-scenarios",
+        "siq-distribution"
+      ],
+      "max_chars": 2000,
+      "min_ratio": 0.9
+    },
+    "sunbo-skills": {
+      "source_ids": [
+        "sunbo-skills"
+      ],
+      "max_chars": 1000,
+      "min_ratio": 0.9
+    },
+    "sqlalchemy": {
+      "source_ids": [
+        "sqlseed-workbench",
+        "sqlseed-main"
+      ],
+      "max_chars": 800,
+      "kind": "table-cell",
+      "min_ratio": 0.9
+    }
+  },
+  "sources": [
+    {
+      "id": "sqlseed-main",
+      "repo": "sunbos/sqlseed",
+      "ref": "default",
+      "paths": [
+        "plugins/sqlseed-ai/src/sqlseed_ai/analyzer.py",
+        "plugins/sqlseed-ai/src/sqlseed_ai/refiner.py",
+        "plugins/mcp-server-sqlseed/src/mcp_server_sqlseed/server.py",
+        "src/sqlseed/core/relation.py",
+        "src/sqlseed/database/sqlalchemy_adapter.py"
+      ]
+    },
+    {
+      "id": "sqlseed-workbench",
+      "repo": "sunbos/sqlseed",
+      "pull": 10,
+      "expected_author": "sunbos",
+      "paths": [
+        "plugins/sqlseed-ai/src/sqlseed_ai/auto_heal/orchestrator.py",
+        "plugins/sqlseed-web/src/sqlseed_web/workbench_ai.py",
+        "plugins/sqlseed-web/src/sqlseed_web/workbench_runtime.py",
+        "src/sqlseed/database/sqlalchemy_adapter.py"
+      ],
+      "excerpts": {
+        "plugins/sqlseed-ai/src/sqlseed_ai/auto_heal/orchestrator.py": "    def _heal_subgraph(",
+        "plugins/sqlseed-web/src/sqlseed_web/workbench_ai.py": "def _candidate_document(",
+        "plugins/sqlseed-web/src/sqlseed_web/workbench_runtime.py": "def _checked_saved("
+      }
+    },
+    {
+      "id": "dify-sdk",
+      "repo": "langgenius/dify-python-sdk",
+      "pull": 3,
+      "expected_author": "sunbos",
+      "paths": [
+        "dify_client/client.py",
+        "dify_client/async_client.py",
+        "tests/test_client.py"
+      ],
+      "excerpts": {
+        "dify_client/client.py": "    def get_document(",
+        "dify_client/async_client.py": "    async def get_document(",
+        "tests/test_client.py": "    def test_retrieve("
+      }
+    },
+    {
+      "id": "siq-scenarios",
+      "repo": "maoyadongsh/siq-agent-security",
+      "pull": 25,
+      "expected_author": "sunbos",
+      "paths": [
+        "docs/research/core-scenarios-reproduction-20260911.md"
+      ]
+    },
+    {
+      "id": "siq-distribution",
+      "repo": "maoyadongsh/siq-agent-security",
+      "pull": 29,
+      "expected_author": "sunbos",
+      "paths": [
+        "scripts/research/verify_skill_distribution.py",
+        "scripts/research/test_verify_skill_distribution.py",
+        "docs/research/evidence/skills-distribution-20260912/README.md"
+      ],
+      "excerpts": {
+        "scripts/research/test_verify_skill_distribution.py": "    def test_each_execute_bit_is_compared("
+      }
+    },
+    {
+      "id": "sunbo-skills",
+      "repo": "sunbos/sunbo-skills",
+      "ref": "default",
+      "paths": [
+        "skills/html2md/scripts/html2md.py"
+      ]
+    }
+  ]
+}
