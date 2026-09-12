@@ -50,6 +50,17 @@ class ProfilePolicyTests(unittest.TestCase):
             if 'pull' in source:
                 self.assertEqual(source['expected_author'], 'sunbos')
 
+    def test_core_recovery_capability_has_individual_protection_and_evidence(self):
+        spec = self.config['blocks']['sqlseed-workbench']
+        self.assertIn('部分失败后，仅在计数明确时生成剩余数据计划', spec['protected_phrases'])
+        sources = {source['id']: source for source in self.config['sources']}
+        self.assertIn('plugins/sqlseed-web/src/sqlseed_web/static/js/workbench/recovery.js',
+                      sources['sqlseed-workbench']['paths'])
+        self.assertIn('plugins/sqlseed-ai/src/sqlseed_ai/errors.py', sources['sqlseed-main']['paths'])
+        for key, block_spec in self.config['blocks'].items():
+            for phrase in block_spec.get('protected_phrases', []):
+                self.assertIn(phrase, self.blocks[key])
+
 
 if __name__ == '__main__':
     unittest.main()

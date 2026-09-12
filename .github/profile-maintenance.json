@@ -6,17 +6,25 @@
   "base_branch": "main",
   "proposal_branch": "automation/profile-maintenance",
   "state_branch": "automation/profile-maintenance-state",
-  "model": "deepseek-flash",
+  "model": "deepseek-v4-pro",
   "max_input_chars": 180000,
-  "max_tokens": 4096,
-  "timeout_seconds": 60,
+  "max_tokens": 8192,
+  "timeout_seconds": 120,
   "blocks": {
     "sqlseed-main": {
       "source_ids": [
         "sqlseed-main"
       ],
       "max_chars": 1800,
-      "min_ratio": 0.9
+      "min_ratio": 0.9,
+      "protected_phrases": [
+        "整理 schema、索引、外键、数据样本及分布信息",
+        "结构校验、列名核对和少量样本预览",
+        "限定重试次数内修正配置",
+        "schema 资源",
+        "检查、生成配置和执行填充",
+        "表依赖拓扑排序、循环依赖检测、外键关联和固定 seed"
+      ]
     },
     "sqlseed-workbench": {
       "source_ids": [
@@ -24,14 +32,30 @@
         "sqlseed-main"
       ],
       "max_chars": 2800,
-      "min_ratio": 0.9
+      "min_ratio": 0.9,
+      "protected_phrases": [
+        "先做契约检查与确定性规则修复",
+        "遇到重复违规、重试或时间预算耗尽时停止或降级",
+        "把建议约束到选定字段与生成器参数",
+        "校验依赖并生成只读样例",
+        "以规则差异供人审阅后应用",
+        "绑定数据库身份、schema、配置版本与检查结果",
+        "保存运行快照并区分计划量和实际提交量",
+        "部分失败后，仅在计数明确时生成剩余数据计划"
+      ]
     },
     "dify-sdk": {
       "source_ids": [
         "dify-sdk"
       ],
       "max_chars": 1500,
-      "min_ratio": 0.9
+      "min_ratio": 0.9,
+      "protected_phrases": [
+        "7 类 API 的同步与异步实现",
+        "知识库检索、文档与分段访问、生成任务控制、反馈及终端用户信息",
+        "mock 测试",
+        "维护同步、异步客户端的接口一致性"
+      ]
     },
     "siq": {
       "source_ids": [
@@ -39,14 +63,26 @@
         "siq-distribution"
       ],
       "max_chars": 2000,
-      "min_ratio": 0.9
+      "min_ratio": 0.9,
+      "protected_phrases": [
+        "正常执行、MCP 收件人注入、同值不同来源、工具伪成功四类场景",
+        "Linux 复现报告与离线验证记录",
+        "四种 Agent 目标的安装、卸载、目录内容和可执行位一致性",
+        "范围是工具交付和生命周期验证"
+      ]
     },
     "sunbo-skills": {
       "source_ids": [
         "sunbo-skills"
       ],
       "max_chars": 1000,
-      "min_ratio": 0.9
+      "min_ratio": 0.9,
+      "protected_phrases": [
+        "HTML 清理与 Markdown 批量转换",
+        "可安装的 Agent Skill",
+        "编码检测、增量处理和预览",
+        "Claude Code Marketplace 分发"
+      ]
     },
     "sqlalchemy": {
       "source_ids": [
@@ -68,7 +104,8 @@
         "plugins/sqlseed-ai/src/sqlseed_ai/refiner.py",
         "plugins/mcp-server-sqlseed/src/mcp_server_sqlseed/server.py",
         "src/sqlseed/core/relation.py",
-        "src/sqlseed/database/sqlalchemy_adapter.py"
+        "src/sqlseed/database/sqlalchemy_adapter.py",
+        "plugins/sqlseed-ai/src/sqlseed_ai/errors.py"
       ]
     },
     {
@@ -80,7 +117,9 @@
         "plugins/sqlseed-ai/src/sqlseed_ai/auto_heal/orchestrator.py",
         "plugins/sqlseed-web/src/sqlseed_web/workbench_ai.py",
         "plugins/sqlseed-web/src/sqlseed_web/workbench_runtime.py",
-        "src/sqlseed/database/sqlalchemy_adapter.py"
+        "src/sqlseed/database/sqlalchemy_adapter.py",
+        "plugins/sqlseed-web/src/sqlseed_web/static/js/workbench/recovery.js",
+        "plugins/sqlseed-web/tests/test_run_recovery.cjs"
       ],
       "excerpts": {
         "plugins/sqlseed-ai/src/sqlseed_ai/auto_heal/orchestrator.py": "    def _heal_subgraph(",
@@ -135,5 +174,6 @@
         "skills/html2md/scripts/html2md.py"
       ]
     }
-  ]
+  ],
+  "thinking": "enabled"
 }

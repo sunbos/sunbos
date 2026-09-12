@@ -106,6 +106,7 @@ def review_body(result):
     """Describe only the reviewed evidence; no run timestamps or raw model HTML."""
     response = result['response']
     summary = html.escape(response['summary']).replace('@', '＠')
+    summary = ''.join('\\' + char if char in r'\`*_{}[]()#+-.!|>' else char for char in summary)
     lines = [
         '根据选定公开项目的变化，更新主页中允许维护的描述。', '', summary, '',
         '核心项目和排序、流程示意、脱敏案例、访问徽章及图表均由程序保护。',

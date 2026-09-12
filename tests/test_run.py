@@ -217,6 +217,11 @@ class PrepareTests(unittest.TestCase):
         self.collect.assert_not_called()
         self.model.assert_not_called()
 
+    def test_review_body_escapes_plain_summary_punctuation(self):
+        result = {'response': {'summary': 'PR #10 与 schema_hash 保持原状', 'updates': []}, 'evidence': []}
+        body = run.review_body(result)
+        self.assertIn(r'PR \#10 与 schema\_hash 保持原状', body)
+
     def test_closed_proposal_retains_trusted_branch_head(self):
         self.load.return_value = ({'pr_head_sha': 'a' * 40, 'fingerprint': 'old'}, 'b' * 40)
         result = run.prepare(CONFIG, README, self.client, api_key='test')

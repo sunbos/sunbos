@@ -56,10 +56,10 @@ gh run list --branch YOUR_BRANCH
 
 ## AI 维护的固定流程
 
-1. **读取固定公开来源。** [配置](profile-maintenance.json) 指定 6 个来源、17 个源码／验证文件：sqlseed 主分支、工作台 PR #10、Dify SDK PR #3、SIQ PR #25／#29、sunbo-skills。每个仓库及 PR head 仓库先核实 public；贡献 PR 核对作者。使用提交固定的文件链接、实际行号和 PR 状态作为证据。
+1. **读取固定公开来源。** [配置](profile-maintenance.json) 指定 6 个来源、20 个源码／验证文件：sqlseed 主分支、工作台 PR #10、Dify SDK PR #3、SIQ PR #25／#29、sunbo-skills。每个仓库及 PR head 仓库先核实 public；贡献 PR 核对作者。使用提交固定的文件链接、实际行号和 PR 状态作为证据。
 2. **比较成功审查过的快照。** 检查文件内容 SHA、PR 的 open／closed／merged／draft 状态。忽略 Star 数量、采集时间、统计图片、选定文件以外的提交。配置、控制器代码或固定内容变化也会重新审查；首次运行需要一次审查建立基线。
 3. **只在输入变化后请求 DeepSeek。** 同一批证据每天不会重复调用模型。模型只看到允许修改的公开描述及公开证据，不接收固定区域里的脱敏案例、私有仓库或本地调研缓存。
-4. **校验局部建议。** 输出必须是严格 JSON；仅允许 6 个标记区域，修改必须引用对应来源的证据。区域之外逐字保留，禁止新增标题、HTML、图片或无依据链接；当前配置至少保留原区域 90% 的有效文字长度。SQLAlchemy 只更新表格第三格，其余精选项目、关系和顺序保持不变。
+4. **校验局部建议。** 输出必须是严格 JSON；仅允许 6 个标记区域，修改必须引用对应来源的证据。区域之外逐字保留，禁止新增标题、HTML、图片或无依据链接；当前配置至少保留原区域 90% 的有效文字长度，并逐字保留配置中的关键能力陈述（包括部分失败后的剩余数据计划）。SQLAlchemy 只更新表格第三格，其余精选项目、关系和顺序保持不变。
 5. **持续维护一个草稿 PR。** 只允许修改 README，机器人使用自己的提交身份。不会自动合并。来源引用和修改原因随 PR 提供，人工核对事实及本人贡献后发布。
 6. **保存“审查过”的状态。** 发布成功或判定无需修改后，将快照记录到 `automation/profile-maintenance-state` 分支的 `state.json`。无需修改时也记住证据；README 和 main 不产生无意义提交。下一天无变化时，连状态分支也不写入。
 
@@ -72,11 +72,11 @@ gh run list --branch YOUR_BRANCH
 密钥配置后可以先在 PR 分支生成真实 AI 预览；每日维护需合并到 main 后启用：
 
 1. 在 [仓库 Actions Secrets](https://github.com/sunbos/sunbos/settings/secrets/actions/new) 新建 **`DEEPSEEK_API_KEY`**，值填 DeepSeek 密钥。不要写入代码、Issue、PR 或聊天记录。
-2. 默认调用官方 `https://api.deepseek.com/chat/completions`，模型为 `deepseek-flash`。如需其他可用模型，在仓库 Actions Variables 中设置 **`DEEPSEEK_MODEL`**，不必修改代码。模型名单以 [DeepSeek 官方文档](https://api-docs.deepseek.com/quick_start/pricing/) 和账户可用型号为准。
+2. 默认调用官方 `https://api.deepseek.com/chat/completions`，模型为 `deepseek-v4-pro`，开启思考模式。首次实测中 Flash 的简短非思考审查出现了错误解释可重试条件和删减恢复能力的问题，因此调整为当前配置。如需其他可用模型，在仓库 Actions Variables 中设置 **`DEEPSEEK_MODEL`**，不必修改代码。模型名单以 [DeepSeek 官方文档](https://api-docs.deepseek.com/quick_start/pricing/) 和账户可用型号为准。
 3. 合并前可运行 **Profile Maintenance Checks**，选择 PR 分支并开启 `review_with_model`：它会真实调用 DeepSeek，将校验通过的候选文案和依据保存为 7 天有效的预览附件，不发布 PR、不保存成功快照。失败时保留脱敏的 `review-diagnostics.json`，记录拒绝原因、模型内容和用量；未经校验的内容仅用于排查。合并后，在 **AI Profile Maintenance** 中先保留 `dry_run=true` 验证公开采集，再取消 dry_run 建立第一次 AI 审查基线。`force` 默认关闭；仅主动重新审查相同证据时打开，会调用模型。
 4. 确认审查完成、草稿 PR 或无需修改状态已保存，再等待每天北京时间 08:57 自动检查。非 main 分支的手动运行强制为 dry-run。
 
-当前每次最多一次模型请求，关闭 thinking，使用 JSON 模式，输出最多 4,096 tokens，输入序列化上限 180,000 字符，单次模型请求超时 60 秒。不会自动重试可能已经计费的调用。只读 GitHub 请求遇到临时网络问题、429 或 5xx 时最多尝试两次；写入请求不重试。缺少密钥、模型不可用、空输出、截断输出和校验失败均停止，不修改主页、不推进成功快照。
+当前每次最多一次模型请求，开启 thinking，使用 JSON 模式，生成预算最多 8,192 tokens（包含思考过程），输入序列化上限 180,000 字符，单次模型请求超时 120 秒。不会自动重试可能已经计费的调用。只读 GitHub 请求遇到临时网络问题、429 或 5xx 时最多尝试两次；写入请求不重试。缺少密钥、模型不可用、空输出、截断输出和校验失败均停止，不修改主页、不推进成功快照。
 
 定时工作流只在 GitHub 默认分支运行，可能延迟；公开仓库连续 60 天无活动时 GitHub 可能停用定时运行。没有通过无意义提交“保活”。可在 Actions 页面重新启用或手动运行。[GitHub 调度规则](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 
