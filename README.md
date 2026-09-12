@@ -8,7 +8,7 @@
 
 构建能调用工具、处理异常并留下验证记录的 AI 工作流。
 
-[sqlseed](https://github.com/sunbos/sqlseed) · [项目实践](#项目与实践) · [开源协作](#开源协作)
+[sqlseed](https://github.com/sunbos/sqlseed) · [项目实践](#项目与实践) · [开源协作](#开源协作) · [技术关注](#技术关注与实践)
 
 </div>
 
@@ -22,7 +22,11 @@
 
 **作者 / 维护者** · [项目](https://github.com/sunbos/sqlseed) · [架构](https://github.com/sunbos/sqlseed/blob/main/docs/architecture.md) · [AI 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [MCP 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed)
 
-开发和测试需要能表达业务规则、保留关联关系、重复生成的数据。我在 sqlseed 中把声明式数据引擎与 AI 配置生成接在一起。主分支已实现：
+把数据库结构和业务规则转成可重复的测试数据，将声明式数据引擎与 AI 配置生成接在一起。
+
+> **流程示意**：数据库结构与字段规则 → 配置校验、依赖检查和样例预览 → 生成并写入关联数据。
+
+主分支已实现：
 
 - **给模型提供数据库上下文**：整理 schema、索引、外键、数据样本及分布信息，生成可复用的数据规则。
 - **验证与反馈修正**：配置经过结构校验、列名核对和少量样本预览；把错误摘要反馈给模型，在限定重试次数内修正配置。
@@ -51,7 +55,9 @@
 
 **工程实践 · 非开源案例（脱敏）**
 
-围绕设备反复运行时的异常检测与故障归因，构建基于 LangGraph 的测试编排：将前置条件、动作执行、状态与事件采集、规则校验、诊断和环境恢复组织为状态图，并将具体动作与检查项拆成可配置模块。
+将设备稳定性测试拆成可配置的动作、检查项与 LangGraph 状态图，处理长时间运行中的异常检测、故障归因与环境恢复。
+
+> **异常处理示意**：执行测试动作 → 并行采集状态与事件、规则判定、Agent 归因 → 输出失败结果与诊断信息。
 
 - **模型建议与测试判定分工**：LLM 提供结构化故障诊断和风险注解，通过／失败仍由规则和采集事实决定；模型不可用时回退规则诊断。
 - **按阶段限制工具**：测试循环提供查询与探测工具，环境恢复工具仅在相应阶段开放，恢复动作进入诊断记录。
@@ -62,7 +68,9 @@
 
 **工程实践 · 非开源案例（脱敏）**
 
-围绕设备事件上传和验收，构建 Python／pytest 与 Dify Workflow 协作的测试流程。串联环境准备、测试数据构造、动作触发、事件获取与结果校验，复用不同协议的基础设施。
+将 Python／pytest 与 Dify Workflow 用于多协议设备事件测试，串联环境准备、测试数据构造、动作触发和事件校验。
+
+> **流程示意**：一项设备事件测试 → 触发操作、采集事件、程序与模型分层校验 → 回填结果和问题说明。
 
 - **分层校验**：程序处理事件采集、能力预检和基础核对，模型参与复杂事件内容分析。
 - **工作流工具化**：将准备环境、构造测试数据和触发操作拆成可组合的工作流，提供统一的 Python 调用入口。
@@ -72,7 +80,7 @@
 
 ### Dify Python SDK · AI 应用接口集成
 
-**代码贡献 · PR 审阅中** · [上游 PR #3](https://github.com/langgenius/dify-python-sdk/pull/3)
+**代码贡献 · PR 审阅中** · [上游 PR #3](https://github.com/langgenius/dify-python-sdk/pull/3) · [我的 fork](https://github.com/sunbos/dify-python-sdk)
 
 为 SDK 补充 **7 类 API 的同步与异步实现**，覆盖知识库检索、文档与分段访问、生成任务控制、反馈及终端用户信息，并补充 mock 测试。
 
@@ -80,7 +88,7 @@
 
 ### SIQ Agent Security · 安全场景与工具交付验证
 
-**开源贡献 · 相关 PR 审阅中**
+**开源贡献 · 相关 PR 审阅中** · [我的 fork](https://github.com/sunbos/siq-agent-security)
 
 围绕 Agent 的授权边界、执行证据和 Skills 交付，补充可复现、可核验的工程验证：
 
@@ -92,6 +100,21 @@
 **个人工具实践** · [项目](https://github.com/sunbos/sunbo-skills) · [中文说明](https://github.com/sunbos/sunbo-skills/blob/main/README_CN.md)
 
 将 HTML 清理与 Markdown 批量转换封装为可安装的 Agent Skill，支持编码检测、增量处理和预览，并通过 Claude Code Marketplace 分发。
+
+## 技术关注与实践
+
+从我的 Star 中精选，围绕 **Python 数据与测试、Agent 工作流、MCP 与文档处理**。已用于项目的部分附实践依据，其余记录具体关注点。
+
+| 项目 | 关系 | 关注点与实践 |
+| --- | --- | --- |
+| [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) | 候选分支采用 | 数据库连接、结构检查与事务管理，见 [sqlseed 适配实现](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/src/sqlseed/database/sqlalchemy_adapter.py)（尚未合并）。 |
+| [factory_boy](https://github.com/FactoryBoy/factory_boy) | 关注 | 测试数据工厂的复用方式，以及与声明式数据生成的取舍。 |
+| [LangChain](https://github.com/langchain-ai/langchain) | 使用部分组件 | 测试 Agent 使用 Core／OpenAI 组件定义工具、接入模型；状态图编排由 LangGraph 完成，见[项目实践](#项目与实践)。 |
+| [Hermes Agent](https://github.com/NousResearch/hermes-agent) | 关注 | Agent 的工具组织、记忆机制与长期任务处理。 |
+| [FastMCP](https://github.com/PrefectHQ/fastmcp) | 关注 | MCP 工具定义、参数约束与错误反馈的设计。 |
+| [MarkItDown](https://github.com/microsoft/markitdown) | 关注 | 文档转 Markdown 的格式兼容与内容清洗质量。 |
+
+[查看全部 Star](https://github.com/sunbos?tab=stars)
 
 ## GitHub 动态
 
