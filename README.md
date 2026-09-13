@@ -44,7 +44,7 @@
 #### 契约驱动修复与交互式工作台
 
 <!-- profile-ai:sqlseed-workbench:start -->
-**候选分支 · [工作台 PR #10](https://github.com/sunbos/sqlseed/pull/10) 尚未合并。** 将字段规则调整、预览、生成、运行记录和候选包交付串成完整流程：
+**工作台 PR #10 已合并。** 将字段规则调整、预览、生成、运行记录和候选包交付串成完整流程：
 
 - **分层修复配置**：先做契约检查与确定性规则修复，再按错误类型缩小上下文、调用分级模型；遇到重复违规、重试或时间预算耗尽时停止或降级。[修复编排](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/plugins/sqlseed-ai/src/sqlseed_ai/auto_heal/orchestrator.py#L2953)
 - **审阅后应用 AI 建议**：把建议约束到选定字段与生成器参数，校验依赖并生成只读样例，以规则差异供人审阅后应用。[建议校验](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/plugins/sqlseed-web/src/sqlseed_web/workbench_ai.py#L735)
@@ -112,7 +112,7 @@
 
 | 项目 | 关系 | 关注点与实践 |
 | --- | --- | --- |
-| [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) | 项目实践 | <!-- profile-ai:sqlalchemy:start -->候选分支采用：数据库连接、结构检查与事务管理，见 [sqlseed 适配实现](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/src/sqlseed/database/sqlalchemy_adapter.py)（尚未合并）。<!-- profile-ai:sqlalchemy:end --> |
+| [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) | 项目实践 | <!-- profile-ai:sqlalchemy:start -->候选分支采用：数据库连接、结构检查与事务管理，见 [sqlseed 适配实现](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/src/sqlseed/database/sqlalchemy_adapter.py)（已合并）。<!-- profile-ai:sqlalchemy:end --> |
 | [factory_boy](https://github.com/FactoryBoy/factory_boy) | 关注 | 测试数据工厂的复用方式，以及与声明式数据生成的取舍。 |
 | [LangChain](https://github.com/langchain-ai/langchain) | 使用部分组件 | 测试 Agent 使用 Core／OpenAI 组件定义工具、接入模型；状态图编排由 LangGraph 完成，见[项目实践](#项目与实践)。 |
 | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | 关注 | Agent 的工具组织、记忆机制与长期任务处理。 |
