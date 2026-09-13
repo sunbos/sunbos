@@ -1,10 +1,16 @@
 <div align="center">
 
-# SunBo · sunbos
+# SunBo
 
 ![主页访问次数](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views)
 
-**AI 应用工程 · Agent 编排 · 数据与测试自动化**
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg">
+  <img alt="把想法写成工具，让 AI 工作流可验证。代码与验证记录的原创插画" src="./assets/profile/banner-light.svg" width="960">
+</picture>
+
+**Python · AI 应用工程 · Agent 编排 · 数据与测试自动化**
 
 构建能调用工具、处理异常并留下验证记录的 AI 工作流。
 
@@ -23,6 +29,12 @@
 **作者 / 维护者** · [项目](https://github.com/sunbos/sqlseed) · [架构](https://github.com/sunbos/sqlseed/blob/main/docs/architecture.md) · [AI 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [MCP 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed)
 
 把数据库结构和业务规则转成可重复的测试数据，将声明式数据引擎与 AI 配置生成接在一起。
+
+<a href="./assets/profile/sqlseed-workbench.png">
+  <img alt="sqlseed 候选工作台的真实界面：合成订单数据的字段规则与离线样例预览" src="./assets/profile/sqlseed-workbench.png" width="960">
+</a>
+
+*工作台候选版本的离线样例预览，使用合成测试数据。截图来自 [PR #10 的对应实现](https://github.com/sunbos/sqlseed/tree/4ba5d08364cb85f44593c57271d339d61d5bf1f9)，点击图片可查看大图。*
 
 > **流程示意**：数据库结构与字段规则 → 配置校验、依赖检查和样例预览 → 生成并写入关联数据。
 
