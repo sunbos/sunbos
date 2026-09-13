@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "policy_version": "2026-09-13.1",
+  "policy_version": "2026-09-13.2",
   "owner": "sunbos",
   "repository": "sunbos/sunbos",
   "base_branch": "main",
@@ -55,20 +55,6 @@
         "知识库检索、文档与分段访问、生成任务控制、反馈及终端用户信息",
         "mock 测试",
         "维护同步、异步客户端的接口一致性"
-      ]
-    },
-    "siq": {
-      "source_ids": [
-        "siq-scenarios",
-        "siq-distribution"
-      ],
-      "max_chars": 2000,
-      "min_ratio": 0.9,
-      "protected_phrases": [
-        "正常执行、MCP 收件人注入、同值不同来源、工具伪成功四类场景",
-        "Linux 复现报告与离线验证记录",
-        "四种 Agent 目标的安装、卸载、目录内容和可执行位一致性",
-        "范围是工具交付和生命周期验证"
       ]
     },
     "sunbo-skills": {
@@ -141,29 +127,6 @@
         "dify_client/client.py": "    def get_document(",
         "dify_client/async_client.py": "    async def get_document(",
         "tests/test_client.py": "    def test_retrieve("
-      }
-    },
-    {
-      "id": "siq-scenarios",
-      "repo": "maoyadongsh/siq-agent-security",
-      "pull": 25,
-      "expected_author": "sunbos",
-      "paths": [
-        "docs/research/core-scenarios-reproduction-20260911.md"
-      ]
-    },
-    {
-      "id": "siq-distribution",
-      "repo": "maoyadongsh/siq-agent-security",
-      "pull": 29,
-      "expected_author": "sunbos",
-      "paths": [
-        "scripts/research/verify_skill_distribution.py",
-        "scripts/research/test_verify_skill_distribution.py",
-        "docs/research/evidence/skills-distribution-20260912/README.md"
-      ],
-      "excerpts": {
-        "scripts/research/test_verify_skill_distribution.py": "    def test_each_execute_bit_is_compared("
       }
     },
     {

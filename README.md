@@ -1,10 +1,16 @@
 <div align="center">
 
-# SunBo · sunbos
+# SunBo
 
 ![主页访问次数](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views)
 
-**AI 应用工程 · Agent 编排 · 数据与测试自动化**
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg">
+  <img alt="把想法写成工具，让 AI 工作流可验证。代码与验证记录的原创插画" src="./assets/profile/banner-light.svg" width="960">
+</picture>
+
+**Python · AI 应用工程 · Agent 编排 · 数据与测试自动化**
 
 构建能调用工具、处理异常并留下验证记录的 AI 工作流。
 
@@ -12,7 +18,7 @@
 
 </div>
 
-我主要用 Python 构建 AI 应用与自动化工具：维护 sqlseed，将 LangGraph、Dify 与设备测试流程结合，并参与 SDK、Agent 安全和工具交付的开源协作。
+我主要用 Python 构建 AI 应用与自动化工具：维护 sqlseed，将 LangGraph、Dify 与设备测试流程结合，并参与 SDK 与工具交付的开源协作。
 
 `Python` · `LangGraph` · `Dify` · `LLM APIs` · `MCP` · `SQLite` · `pytest` · `GitHub Actions`
 
@@ -91,17 +97,6 @@
 
 这部分工作聚焦 AI 应用集成中的具体接口：让知识库检索与文档能力可以从 Python 工作流调用，并维护同步、异步客户端的接口一致性。
 <!-- profile-ai:dify-sdk:end -->
-
-### SIQ Agent Security · 安全场景与工具交付验证
-
-<!-- profile-ai:siq:start -->
-**开源贡献 · 相关 PR 审阅中** · [我的 fork](https://github.com/sunbos/siq-agent-security)
-
-围绕 Agent 的授权边界、执行证据和 Skills 交付，补充可复现、可核验的工程验证：
-
-- **安全场景复现**：为正常执行、MCP 收件人注入、同值不同来源、工具伪成功四类场景补充 Linux 复现报告与离线验证记录。[场景报告 PR #25](https://github.com/maoyadongsh/siq-agent-security/pull/25)
-- **Skills 分发验证**：检查四种 Agent 目标的安装、卸载、目录内容和可执行位一致性，并补充分发测试与证据归档；范围是工具交付和生命周期验证。[分发验证 PR #29](https://github.com/maoyadongsh/siq-agent-security/pull/29)
-<!-- profile-ai:siq:end -->
 
 ### sunbo-skills · 把日常脚本做成 Agent 工具
 
