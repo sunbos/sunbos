@@ -69,6 +69,8 @@ def prepare(config, readme, client, *, api_key='', dry_run=False, force=False, p
                 'evidence': collected['evidence']}
     # A preview evaluates this checkout, never a pending remote proposal.
     proposal = None if preview else load_proposal(client, config, old_state, readme)
+    if config.get('publication_mode') == 'direct' and proposal is not None:
+        raise ValueError('存在尚未处理的旧维护 PR，不能直接发布另一份更新。')
     current = proposal['readme'] if proposal else readme
     if protected_text(current, config) != protected:
         raise ValueError('机器人 PR 的固定内容与主页不一致，请先人工处理。')
@@ -94,7 +96,8 @@ def prepare(config, readme, client, *, api_key='', dry_run=False, force=False, p
     return {
         **common, 'status': 'reviewed',
         'publish': candidate != current,
-        'expected_pr_head': push_expectation(client, config, old_state) if candidate != current else None,
+        'expected_pr_head': (push_expectation(client, config, old_state)
+                             if candidate != current and config.get('publication_mode') != 'direct' else None),
         'candidate': candidate, 'base_readme': readme,
         'old_state': old_state, 'file_sha': file_sha, 'state': next_state,
         'response': response, 'evidence': collected['evidence'],
@@ -108,14 +111,18 @@ def escape_review_summary(summary):
     return ''.join('\\' + char if char in r'\`*_{}[]()#+-.!|>' else char for char in escaped)
 
 
-def review_body(result):
+def review_body(result, publication_mode='pr'):
     """Describe only the reviewed evidence; no run timestamps or raw model HTML."""
     response = result['response']
     summary = escape_review_summary(response['summary'])
     lines = [
         '根据选定公开项目的变化，更新主页中允许维护的描述。', '', summary, '',
         '核心项目和排序、流程示意、脱敏案例、访问徽章及图表均由程序保护。',
-        '这是 AI 草稿；请核对事实、本人贡献归属以及未合并／已合并的区别后再发布。', '',
+        ('仅供预览，不发布或写状态；候选与依据用于检查当前分支的效果。'
+         if result.get('status') == 'preview' else
+         '候选通过内容和版本校验后自动发布；新项目与固定经历不在自动编辑范围内。'
+         if publication_mode == 'direct' else
+         '这是 AI 草稿；请核对事实、本人贡献归属以及未合并／已合并的区别后再发布。'), '',
         '本次建议及依据：', '',
     ]
     evidence = {item['id']: item for item in result['evidence']}
@@ -157,9 +164,14 @@ def checkpoint(client, config, result, pr_head_sha):
     save_state(client, config, next_state, result['file_sha'])
 
 
+def publish_candidate(client, config, result, base_sha):
+    from .publisher import publish
+    return publish(client, config, result, base_sha)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['prepare', 'guard', 'checkpoint', 'validate'])
+    parser.add_argument('command', choices=['prepare', 'guard', 'checkpoint', 'publish', 'validate'])
     parser.add_argument('--output-dir', type=Path)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--dry-run', action='store_true')
@@ -167,6 +179,7 @@ def main(argv=None):
                       help='使用模型生成当前分支预览，不发布或记录完成状态')
     parser.add_argument('--force', action='store_true')
     parser.add_argument('--pr-head-sha', default='')
+    parser.add_argument('--base-sha', default='')
     args = parser.parse_args(argv)
     config = json.loads(CONFIG_PATH.read_text(encoding='utf-8'))
     controller = hashlib.sha256()
@@ -205,8 +218,9 @@ def main(argv=None):
             if result['status'] == 'reviewed':
                 ensure_fresh(client, config, result)
             (output / 'candidate.md').write_text(result['candidate'], encoding='utf-8')
-            (output / 'pr-body.md').write_text(review_body(result), encoding='utf-8')
-        if result['publish'] and os.getenv('GITHUB_ENV'):
+            (output / 'pr-body.md').write_text(
+                review_body(result, config.get('publication_mode', 'pr')), encoding='utf-8')
+        if result['publish'] and config.get('publication_mode') != 'direct' and os.getenv('GITHUB_ENV'):
             with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as handle:
                 handle.write(f"PROFILE_EXPECTED_PR_SHA={result['expected_pr_head']}\n")
         github_output = os.getenv('GITHUB_OUTPUT')
@@ -233,6 +247,18 @@ def main(argv=None):
             if result.get('status') != 'reviewed':
                 raise ValueError('预览或未完成审查的结果不能进入发布流程。')
             ensure_fresh(client, config, result)
+        elif args.command == 'publish':
+            publication = publish_candidate(client, config, result, args.base_sha)
+            messages = {
+                'published': '已自动发布经过校验的主页更新，并保存成功审查状态。',
+                'checkpointed': '主页无需修改，成功审查状态已保存。',
+                'deferred': '主分支在审查期间发生变化，已保留现状，等待下次重新检查。',
+            }
+            message = messages[publication['status']]
+            print(message)
+            if os.getenv('GITHUB_STEP_SUMMARY'):
+                with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as handle:
+                    handle.write('\n' + message + '\n')
         else:
             checkpoint(client, config, result, args.pr_head_sha)
             print('成功审查的证据已保存到状态分支。')

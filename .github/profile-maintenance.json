@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "policy_version": "2026-09-13.2",
+  "policy_version": "2026-09-13.3",
   "owner": "sunbos",
   "repository": "sunbos/sunbos",
   "base_branch": "main",
@@ -138,5 +138,6 @@
       ]
     }
   ],
-  "thinking": "enabled"
+  "thinking": "enabled",
+  "publication_mode": "direct"
 }

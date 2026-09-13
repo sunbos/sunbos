@@ -8,7 +8,15 @@ updates:
       time: "09:00"
       timezone: Asia/Shanghai
     open-pull-requests-limit: 3
+    # Unversioned moving branches remain pinned until intentionally upgraded.
+    allow:
+      - dependency-name: "actions/*"
+      - dependency-name: "Platane/snk*"
+      - dependency-name: "crazy-max/ghaction-github-pages"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
-      github-actions:
-        patterns:
-          - "*"
+      routine-actions:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
