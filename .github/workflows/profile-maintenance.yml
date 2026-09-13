@@ -27,10 +27,9 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
-      pull-requests: write
+      pull-requests: read
     env:
       PYTHONDONTWRITEBYTECODE: '1'
-      PROFILE_PROPOSAL_BRANCH: automation/profile-maintenance
       DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
     steps:
       - name: Check out the requested branch
@@ -49,6 +48,7 @@ jobs:
           echo "REVIEW_DIR=$RUNNER_TEMP/profile-maintenance" >> "$GITHUB_ENV"
           python -m unittest discover -s tests -v
           python -m scripts.profile_maintenance.run validate
+          echo "PROFILE_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Collect evidence and review only changed inputs
         id: prepare
@@ -69,46 +69,42 @@ jobs:
           fi
           python -m scripts.profile_maintenance.run "${args[@]}"
 
-      - name: Recheck the base and bot branch before publication
+      - name: Validate the candidate in this trusted workflow
         if: steps.prepare.outputs.publish == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          python -m scripts.profile_maintenance.run guard --output-dir "$REVIEW_DIR"
           cp "$REVIEW_DIR/candidate.md" README.md
+          python -m unittest discover -s tests -v
+          python -m scripts.profile_maintenance.run validate
           git diff --check
-          mkdir -p "$RUNNER_TEMP/profile-maintenance-hooks"
-          cp scripts/profile_maintenance/pre_push.py "$RUNNER_TEMP/profile-maintenance-hooks/check.py"
-          cat > "$RUNNER_TEMP/profile-maintenance-hooks/pre-push" <<'HOOK'
-          #!/bin/sh
-          exec python "$RUNNER_TEMP/profile-maintenance-hooks/check.py"
-          HOOK
-          chmod 700 "$RUNNER_TEMP/profile-maintenance-hooks/pre-push"
-          git config --local core.hooksPath "$RUNNER_TEMP/profile-maintenance-hooks"
 
-      - name: Create or update the single review PR
-        if: steps.prepare.outputs.publish == 'true'
-        id: proposal
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          token: ${{ github.token }}
-          base: main
-          branch: automation/profile-maintenance
-          add-paths: README.md
-          commit-message: 'docs: refresh evidence-backed profile descriptions'
-          title: 'docs: review profile updates from public project evidence'
-          body-path: ${{ runner.temp }}/profile-maintenance/pr-body.md
-          draft: always-true
-          sign-commits: false
-          delete-branch: false
-          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
-          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
-
-      - name: Save successfully reviewed evidence, including no-change decisions
+      - name: Publish validated text or save the no-change checkpoint
         if: steps.prepare.outputs.status == 'reviewed'
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_HEAD_SHA: ${{ steps.proposal.outputs.pull-request-head-sha }}
         run: |
-          python -m scripts.profile_maintenance.run checkpoint \
-            --output-dir "$REVIEW_DIR" --pr-head-sha "$PR_HEAD_SHA"
+          python -m scripts.profile_maintenance.run publish \
+            --output-dir "$REVIEW_DIR" --base-sha "$PROFILE_BASE_SHA"
+
+  dependencies:
+    if: github.repository == 'sunbos/sunbos' && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || inputs.dry_run == false)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      checks: read
+      statuses: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Test dependency-update boundaries
+        run: python -m unittest discover -s tests -p 'test_dependencies.py' -v
+      - name: Merge verified routine action updates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m scripts.profile_maintenance.dependencies

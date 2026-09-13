@@ -1,7 +1,7 @@
 """One-shot DeepSeek review of explicitly editable, public README blocks.
 
 The checks below enforce structure and provenance, not truth or semantic safety.
-Every accepted proposal still needs human review in a draft pull request.
+The controller decides whether validated proposals are previewed or published.
 """
 
 import html
@@ -51,7 +51,7 @@ table-cell 区域只输出单元格内的文字，禁止换行或管道字符，
 输出严格 JSON 对象，且只含 summary 和 updates。summary 是单段纯文本中文审阅说明，禁止换行、链接、图片、HTML 和 Markdown 格式。
 updates 每项只含 block_id、markdown、evidence_ids（字符串数组）。无需变更时输出空数组，不为更新而更新。
 格式：{"summary":"说明","updates":[{"block_id":"区域 ID","markdown":"完整替换区域文字","evidence_ids":["证据 ID"]}]}。
-静态检查不能证明语义正确；所有修改是待人工审阅的草稿。
+修改可能由发布器校验后自动上线，不能依赖后续人工纠错；任何证据不足、归属不清或与固定表述冲突的内容均保持原文，只在 summary 说明。
 """
 
 

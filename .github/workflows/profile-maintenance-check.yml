@@ -5,15 +5,17 @@ on:
     paths:
       - README.md
       - '.github/profile-maintenance.json'
-      - '.github/workflows/profile-maintenance*.yml'
+      - '.github/workflows/**'
+      - '.github/dependabot.yml'
       - 'scripts/profile_maintenance/**'
       - 'tests/**'
   push:
-    branches: [main, codex/profile-ai-showcase]
+    branches: [main]
     paths:
       - README.md
       - '.github/profile-maintenance.json'
-      - '.github/workflows/profile-maintenance*.yml'
+      - '.github/workflows/**'
+      - '.github/dependabot.yml'
       - 'scripts/profile_maintenance/**'
       - 'tests/**'
   workflow_dispatch:
@@ -37,6 +39,16 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
+      - name: Check every workflow with a verified actionlint release
+        shell: bash
+        run: |
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --fail --silent --show-error --location --retry 2 \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$archive"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint"
       - run: |
           python -m unittest discover -s tests -v
           python -m scripts.profile_maintenance.run validate
