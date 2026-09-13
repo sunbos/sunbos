@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "policy_version": "2026-09-13.3",
+  "policy_version": "2026-09-13.4",
   "owner": "sunbos",
   "repository": "sunbos/sunbos",
   "base_branch": "main",
@@ -41,7 +41,8 @@
         "以规则差异供人审阅后应用",
         "绑定数据库身份、schema、配置版本与检查结果",
         "保存运行快照并区分计划量和实际提交量",
-        "部分失败后，仅在计数明确时生成剩余数据计划"
+        "部分失败后，仅在计数明确时生成剩余数据计划",
+        "[工作台 PR #10](https://github.com/sunbos/sqlseed/pull/10)"
       ]
     },
     "dify-sdk": {
