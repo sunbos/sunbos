@@ -22,6 +22,7 @@
 | --- | --- | --- |
 | **LLM 应用与工具接入** | 从数据库 schema 构建上下文，生成并校验数据配置，通过 MCP 暴露工具。 | [sqlseed AI](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [Core MCP](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed) · [AI MCP](https://github.com/sunbos/sqlseed/blob/main/plugins/sqlseed-ai/src/sqlseed_ai/mcp.py) |
 | **Agent 编排与自动化测试** | 用 LangGraph 组织测试、诊断与恢复；用 Dify 串联设备事件测试，明确模型分析与规则判定的边界。 | [设备稳定性测试 Agent](#设备稳定性测试-agent--langgraph-与确定性测试协作) · 下文脱敏案例 |
+| **Python API / SDK 工程** | 将认证与业务接口分层，定义令牌响应类型和错误语义，并完成 Python 包发布。 | [EZVIZ SDK](#ezviz-openapi-utils--python-sdk-与设备-api-集成) · [Dify SDK 贡献](#dify-python-sdk--ai-应用接口集成) |
 | **可靠性与工具交付** | 对 AI 修复设置重试与时间预算；提供运行快照、失败恢复、Python API、CLI 与 Web 入口。 | [系统架构](https://sunbos.github.io/sqlseed/architecture/) · [测试与 CI](https://github.com/sunbos/sqlseed/actions/workflows/ci.yml) · [版本发布](https://github.com/sunbos/sqlseed/releases) |
 
 公开项目链接可查看实现与验证记录；设备测试案例为已脱敏的非开源实践，以下单独标注。
@@ -79,6 +80,15 @@
 参赛材料通过两次 PR 合并收录，可查看问题定义、工具设计与技术方案：
 
 [作品与技术报告](https://github.com/gdgshanghai/Gemma4-Hackathon-ShangHai/tree/main/submissions/2026/track_A/GemmaSQLSeed) · [首次提交 #19](https://github.com/gdgshanghai/Gemma4-Hackathon-ShangHai/pull/19) · [后续完善 #39](https://github.com/gdgshanghai/Gemma4-Hackathon-ShangHai/pull/39)
+
+### ezviz-openapi-utils · Python SDK 与设备 API 集成
+
+**作者 / 维护者** · [项目](https://github.com/sunbos/ezviz-openapi-utils) · [中文文档](https://github.com/sunbos/ezviz-openapi-utils/blob/main/README.zh-CN.md) · [PyPI](https://pypi.org/project/ezviz-openapi-utils/)
+
+将萤石开放平台的认证客户端与设备 API 分层封装，便于 Python 工作流集成设备接口。提供双语文档与测试用例，并以 Python 包发布。
+
+- **接口与错误处理**：认证客户端负责令牌与请求会话，API 层封装设备操作，以自定义异常表达认证失败、API 错误与设备能力限制。[认证客户端](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/src/ezviz_openapi_utils/client.py#L20) · [API 实现](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/src/ezviz_openapi_utils/api.py#L67)
+- **类型与验证入口**：为令牌响应定义 TypedDict，提供认证相关测试用例；真实接口测试需要配置凭据。[令牌响应类型](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/src/ezviz_openapi_utils/oauth.py#L29) · [测试用例](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/tests/test_client.py#L31)
 
 ### 设备稳定性测试 Agent · LangGraph 与确定性测试协作
 
