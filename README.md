@@ -3,9 +3,9 @@
 ![主页访问次数](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg">
-  <img alt="把想法写成工具，让 AI 工作流可验证。代码与验证记录的原创插画" src="./assets/profile/banner-light.svg" width="960">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg?v=2">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg?v=2">
+  <img alt="AI 应用工程与 Agent 工作流：模型接入、工具编排、自动化测试与结果验证；sqlseed 作者与维护者" src="./assets/profile/banner-light.svg?v=2" width="960">
 </picture>
 
 **AI 应用与 Agent 工程 · 工具调用 · 工作流编排 · 自动化验证**

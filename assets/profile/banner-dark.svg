@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="190" viewBox="0 0 960 190" role="img" aria-labelledby="banner-title banner-desc" xml:lang="zh-CN">
-  <title id="banner-title">把想法写成工具，让 AI 工作流可验证。</title>
-  <desc id="banner-desc">SunBo 个人技术主页的深色横幅。左侧是两行主题文字，右侧以 Python 蓝和浅金色的开放括号、错落的代码短线与勾形笔画，抽象表现工具协作和验证记录。插画为原创装饰图形。</desc>
+  <title id="banner-title">AI 应用工程与 Agent 工作流</title>
+  <desc id="banner-desc">SunBo 个人技术主页的深色横幅。模型接入、工具编排、自动化测试与结果验证；sqlseed 作者和维护者，使用 Python、MCP、LangGraph 与 Dify。右侧保留表现工具协作和验证记录的原创括号与勾形插画。</desc>
   <rect width="960" height="190" rx="12" fill="#16263A"/>
   <g fill="#E0E9F4" font-family="'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',Arial,sans-serif" font-size="30" font-weight="600">
-    <text x="42" y="77">把想法写成工具，</text>
-    <text x="42" y="121">让 AI 工作流可验证。</text>
+    <text x="42" y="65" font-size="29">AI 应用工程与 Agent 工作流</text>
+    <text x="42" y="106" font-size="21" font-weight="500">模型接入 · 工具编排 · 自动化测试 · 结果验证</text>
+    <text x="42" y="146" font-size="17" font-weight="400">sqlseed 作者 / 维护者｜Python · MCP · LangGraph · Dify</text>
   </g>
   <g fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M726 37h-15c-14 0-22 8-22 23v14c0 12-7 21-21 21 14 0 21 9 21 21v14c0 15 8 23 22 23h15" stroke="#88B8DA" stroke-width="8"/>
