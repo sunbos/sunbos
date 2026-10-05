@@ -2,11 +2,15 @@
 
 ![主页访问次数](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg">
+  <img alt="把想法写成工具，让 AI 工作流可验证。代码与验证记录的原创插画" src="./assets/profile/banner-light.svg" width="960">
+</picture>
+
 **AI 应用与 Agent 工程 · 工具调用 · 工作流编排 · 自动化验证**
 
 我用 Python 将 LLM 接入数据生成与设备测试流程，重点处理模型输出校验、工具权限、异常恢复和执行追溯。维护开源项目 **sqlseed**，以离线数据引擎为基础，提供 Web 工作台、可选 AI 配置助手与 MCP 工具接口；在设备测试实践中使用 **LangGraph / Dify** 组织工作流。
-
-**求职方向：AI 应用工程师 / Agent 开发工程师**，也关注 AI 测试自动化与 Python 开发者工具方向。
 
 `Python` · `LangGraph` · `Dify` · `LLM APIs` · `MCP` · `SQLite` · `pytest` · `GitHub Actions`
 
