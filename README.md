@@ -1,43 +1,56 @@
-<div align="center">
-
 # SunBo
 
 ![主页访问次数](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views)
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg">
-  <img alt="把想法写成工具，让 AI 工作流可验证。代码与验证记录的原创插画" src="./assets/profile/banner-light.svg" width="960">
-</picture>
+**AI 应用与 Agent 工程 · 工具调用 · 工作流编排 · 自动化验证**
 
-**Python · AI 应用工程 · Agent 编排 · 数据与测试自动化**
+我用 Python 将 LLM 接入数据生成与设备测试流程，重点处理模型输出校验、工具权限、异常恢复和执行追溯。维护开源项目 **sqlseed**，以离线数据引擎为基础，提供 Web 工作台、可选 AI 配置助手与 MCP 工具接口；在设备测试实践中使用 **LangGraph / Dify** 组织工作流。
 
-构建能调用工具、处理异常并留下验证记录的 AI 工作流。
-
-[sqlseed](https://github.com/sunbos/sqlseed) · [项目实践](#项目与实践) · [开源协作](#开源协作) · [技术关注](#技术关注与实践)
-
-</div>
-
-我主要用 Python 构建 AI 应用与自动化工具：维护 sqlseed，将 LangGraph、Dify 与设备测试流程结合，并参与 SDK 与工具交付的开源协作。
+**求职方向：AI 应用工程师 / Agent 开发工程师**，也关注 AI 测试自动化与 Python 开发者工具方向。
 
 `Python` · `LangGraph` · `Dify` · `LLM APIs` · `MCP` · `SQLite` · `pytest` · `GitHub Actions`
+
+[代表作 sqlseed](https://github.com/sunbos/sqlseed) · [使用文档](https://sunbos.github.io/sqlseed/) · [能力与证据](#能力与证据) · [项目实践](#项目与实践) · [开源协作](#开源协作)
+
+## 能力与证据
+
+| 能力方向 | 具体实践 | 证据入口 |
+| --- | --- | --- |
+| **LLM 应用与工具接入** | 从数据库 schema 构建上下文，生成并校验数据配置，通过 MCP 暴露工具。 | [sqlseed AI](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [Core MCP](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed) · [AI MCP](https://github.com/sunbos/sqlseed/blob/main/plugins/sqlseed-ai/src/sqlseed_ai/mcp.py) |
+| **Agent 编排与自动化测试** | 用 LangGraph 组织测试、诊断与恢复；用 Dify 串联设备事件测试，明确模型分析与规则判定的边界。 | [设备稳定性测试 Agent](#设备稳定性测试-agent--langgraph-与确定性测试协作) · 下文脱敏案例 |
+| **可靠性与工具交付** | 对 AI 修复设置重试与时间预算；提供运行快照、失败恢复、Python API、CLI 与 Web 入口。 | [系统架构](https://sunbos.github.io/sqlseed/architecture/) · [测试与 CI](https://github.com/sunbos/sqlseed/actions/workflows/ci.yml) · [版本发布](https://github.com/sunbos/sqlseed/releases) |
+
+公开项目链接可查看实现与验证记录；设备测试案例为已脱敏的非开源实践，以下单独标注。
 
 ## 项目与实践
 
 ### sqlseed · 数据生成引擎与 AI 工作台
 
-**作者 / 维护者** · [项目](https://github.com/sunbos/sqlseed) · [架构](https://github.com/sunbos/sqlseed/blob/main/docs/architecture.md) · [AI 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [MCP 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed)
+**作者 / 维护者** · [项目](https://github.com/sunbos/sqlseed) · [架构](https://github.com/sunbos/sqlseed/blob/main/docs/architecture.md) · [AI 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [Core MCP](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed) · [AI MCP](https://github.com/sunbos/sqlseed/blob/main/plugins/sqlseed-ai/src/sqlseed_ai/mcp.py)
 
-把数据库结构和业务规则转成可重复的测试数据，将声明式数据引擎与 AI 配置生成接在一起。
+为 SQLite / PostgreSQL 开发与测试场景生成可重复的数据。核心引擎离线运行，AI 作为可选的配置生成与修复能力；用户可先检查规则与样例，再确认写入。
+
+[快速开始（无需模型 API key）](https://github.com/sunbos/sqlseed/blob/main/README.zh-CN.md#快速开始) · [工作台指南](https://sunbos.github.io/sqlseed/web-workbench/) · [可复现订单示例](https://github.com/sunbos/sqlseed/tree/main/examples/order_workflow)
 
 > **流程示意**：数据库结构与字段规则 → 配置校验、依赖检查和样例预览 → 生成并写入关联数据。
+
+<details>
+<summary>查看真实工作台截图与 AI / MCP 工程实现</summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/sunbos/sqlseed/2c14563364f2e3a34038e14a0d2b37cabd0a2705/docs/assets/screenshots/web-workbench-zh-CN-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/sunbos/sqlseed/2c14563364f2e3a34038e14a0d2b37cabd0a2705/docs/assets/screenshots/web-workbench-zh-CN-light.png">
+  <img alt="sqlseed 中文 Web 工作台：使用仓库内虚构 SQLite 订单示例展示数据生成界面" src="https://raw.githubusercontent.com/sunbos/sqlseed/2c14563364f2e3a34038e14a0d2b37cabd0a2705/docs/assets/screenshots/web-workbench-zh-CN-light.png" width="960">
+</picture>
+
+实际工作台截图，使用虚构订单数据；可交互体验请按上方快速开始与工作台指南在本地运行。
 
 <!-- profile-ai:sqlseed-main:start -->
 主分支已实现：
 
 - **给模型提供数据库上下文**：整理 schema、索引、外键、数据样本及分布信息，生成可复用的数据规则。
 - **验证与反馈修正**：配置经过结构校验、列名核对和少量样本预览；把错误摘要反馈给模型，在限定重试次数内修正配置。
-- **通过 MCP 接入 AI 助手**：提供 schema 资源，以及检查、生成配置和执行填充的工具入口。
+- **通过 MCP 接入 AI 助手**：Core MCP 提供规则式 YAML 生成与单表填充；独立的 AI MCP 提供模型辅助配置生成、表分析与分析后填充。
 - **处理实际的数据约束**：表依赖拓扑排序、循环依赖检测、外键关联和固定 seed，让配置能接入可复现的数据生成流程。
 <!-- profile-ai:sqlseed-main:end -->
 
@@ -46,10 +59,12 @@
 <!-- profile-ai:sqlseed-workbench:start -->
 **[工作台 PR #10](https://github.com/sunbos/sqlseed/pull/10) 已合入 main。** 将字段规则调整、预览、生成、运行记录和候选包交付串成完整流程：
 
-- **分层修复配置**：先做契约检查与确定性规则修复，再按错误类型缩小上下文、调用分级模型；遇到重复违规、重试或时间预算耗尽时停止或降级。[修复编排](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/plugins/sqlseed-ai/src/sqlseed_ai/auto_heal/orchestrator.py#L2953)
+- **分层修复配置**：先做契约检查与确定性规则修复，再按错误类型缩小上下文、分级调用模型修复；遇到重复违规、重试或时间预算耗尽时停止或降级。[修复编排](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/plugins/sqlseed-ai/src/sqlseed_ai/auto_heal/orchestrator.py#L2953)
 - **审阅后应用 AI 建议**：把建议约束到选定字段与生成器参数，校验依赖并生成只读样例，以规则差异供人审阅后应用。[建议校验](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/plugins/sqlseed-web/src/sqlseed_web/workbench_ai.py#L735)
 - **让执行结果可追溯**：绑定数据库身份、schema、配置版本与检查结果，保存运行快照并区分计划量和实际提交量；部分失败后，仅在计数明确时生成剩余数据计划。[运行记录](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/plugins/sqlseed-web/src/sqlseed_web/workbench_runtime.py#L790)
 <!-- profile-ai:sqlseed-workbench:end -->
+
+</details>
 
 #### GemmaSQLSeed · sqlseed 的 AI Agent 参赛实践
 
@@ -88,6 +103,18 @@
 
 ## 开源协作
 
+### SIQ Agent Security · 跨平台适配与安全工具交付
+
+**上游代码贡献者** · [上游项目](https://github.com/maoyadongsh/siq-agent-security)
+
+参与 Agent 安全工具的工程实现与回归验证，以下贡献已合并至上游：
+
+- **Skills 分发兼容验证**：新增文件树比较、CLI smoke 与自动化测试，检查文件内容和可执行位的一致性。[PR #29](https://github.com/maoyadongsh/siq-agent-security/pull/29)
+- **Windows 运行时适配**：参与任务调度、状态诊断及跨平台启动器的改进，并补充回归验证。[PR #40](https://github.com/maoyadongsh/siq-agent-security/pull/40)
+- **私密状态保护与中断恢复**：参与 Windows 状态与凭据 ACL 检查、迁移和恢复流程。[PR #82](https://github.com/maoyadongsh/siq-agent-security/pull/82)
+
+与上游维护者协作完成，具体改动和平台验收范围见对应 PR。
+
 ### Dify Python SDK · AI 应用接口集成
 
 <!-- profile-ai:dify-sdk:start -->
@@ -108,6 +135,9 @@
 
 ## 技术关注与实践
 
+<details>
+<summary>展开技术选型、组件使用与关注项目</summary>
+
 从我的 Star 中精选，围绕 **Python 数据与测试、Agent 工作流、MCP 与文档处理**。已用于项目的部分附实践依据，其余记录具体关注点。
 
 | 项目 | 关系 | 关注点与实践 |
@@ -121,7 +151,12 @@
 
 [查看全部 Star](https://github.com/sunbos?tab=stars)
 
+</details>
+
 ## GitHub 动态
+
+<details>
+<summary>展开贡献统计、语言分布与近期活动</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/sunbos/sunbos/main/profile-summary-card-output/github_dark/0-profile-details.svg">
@@ -160,6 +195,8 @@
 ### 近期活动与关注
 
 <img alt="sunbos 的 GitHub 活动、开源贡献关联与近期 Star" src="https://raw.githubusercontent.com/sunbos/sunbos/main/github-metrics.svg">
+
+</details>
 
 ---
 

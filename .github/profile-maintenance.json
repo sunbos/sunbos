@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "policy_version": "2026-09-13.4",
+  "policy_version": "2026-10-06.1",
   "owner": "sunbos",
   "repository": "sunbos/sunbos",
   "base_branch": "main",
@@ -21,8 +21,8 @@
         "整理 schema、索引、外键、数据样本及分布信息",
         "结构校验、列名核对和少量样本预览",
         "限定重试次数内修正配置",
-        "schema 资源",
-        "检查、生成配置和执行填充",
+        "Core MCP 提供规则式 YAML 生成与单表填充",
+        "独立的 AI MCP 提供模型辅助配置生成、表分析与分析后填充",
         "表依赖拓扑排序、循环依赖检测、外键关联和固定 seed"
       ]
     },
@@ -87,9 +87,11 @@
       "repo": "sunbos/sqlseed",
       "ref": "default",
       "paths": [
-        "plugins/sqlseed-ai/src/sqlseed_ai/analyzer.py",
+        "plugins/sqlseed-ai/src/sqlseed_ai/analyzer/_json_parser.py",
+        "plugins/sqlseed-ai/src/sqlseed_ai/analyzer/_context.py",
         "plugins/sqlseed-ai/src/sqlseed_ai/refiner.py",
         "plugins/mcp-server-sqlseed/src/mcp_server_sqlseed/server.py",
+        "plugins/sqlseed-ai/src/sqlseed_ai/mcp.py",
         "src/sqlseed/core/relation.py",
         "src/sqlseed/database/sqlalchemy_adapter.py",
         "plugins/sqlseed-ai/src/sqlseed_ai/errors.py"
