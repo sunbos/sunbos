@@ -3,44 +3,35 @@
 ![主页访问次数](https://visitor-badge.laobi.icu/badge?page_id=sunbos.sunbos&left_color=%23333333&right_color=%23ff5555&left_text=👥%20Total%20Views)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg?v=2">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg?v=2">
-  <img alt="AI 应用工程与 Agent 工作流：模型接入、工具编排、自动化测试与结果验证；sqlseed 作者与维护者" src="./assets/profile/banner-light.svg?v=2" width="960">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/profile/banner-dark.svg?v=3">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/profile/banner-light.svg?v=3">
+  <img alt="AI 应用与 Harness 工程：工具接口、执行验证与反馈机制；sqlseed 作者与维护者" src="./assets/profile/banner-light.svg?v=3" width="960">
 </picture>
 
-**AI 应用与 Agent 工程 · 工具调用 · 工作流编排 · 自动化验证**
+**让模型接入工具，让执行结果可验证。**
 
-我用 Python 将 LLM 接入数据生成与设备测试流程，重点处理模型输出校验、工具权限、异常恢复和执行追溯。维护开源项目 **sqlseed**，以离线数据引擎为基础，提供 Web 工作台、可选 AI 配置助手与 MCP 工具接口；在设备测试实践中使用 **LangGraph / Dify** 组织工作流。
+我用 Python 构建数据工具与稳定性测试系统，关注 **AI 应用与 Harness 工程**中的上下文、工具接口、反馈验证和异常恢复。维护开源项目 **sqlseed**，并在设备测试实践中探索模型分析与确定性执行的协作。
 
-`Python` · `LangGraph` · `Dify` · `LLM APIs` · `MCP` · `SQLite` · `pytest` · `GitHub Actions`
+`Python` · `LLM APIs` · `MCP` · `pytest`
 
-[代表作 sqlseed](https://github.com/sunbos/sqlseed) · [使用文档](https://sunbos.github.io/sqlseed/) · [能力与证据](#能力与证据) · [项目实践](#项目与实践) · [开源协作](#开源协作)
-
-## 能力与证据
-
-| 能力方向 | 具体实践 | 证据入口 |
-| --- | --- | --- |
-| **LLM 应用与工具接入** | 从数据库 schema 构建上下文，生成并校验数据配置，通过 MCP 暴露工具。 | [sqlseed AI](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [Core MCP](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed) · [AI MCP](https://github.com/sunbos/sqlseed/blob/main/plugins/sqlseed-ai/src/sqlseed_ai/mcp.py) |
-| **Agent 编排与自动化测试** | 用 LangGraph 组织测试、诊断与恢复；用 Dify 串联设备事件测试，明确模型分析与规则判定的边界。 | [设备稳定性测试 Agent](#设备稳定性测试-agent--langgraph-与确定性测试协作) · 下文脱敏案例 |
-| **Python API / SDK 工程** | 将认证与业务接口分层，定义令牌响应类型和错误语义，并完成 Python 包发布。 | [EZVIZ SDK](#ezviz-openapi-utils--python-sdk-与设备-api-集成) · [Dify SDK 贡献](#dify-python-sdk--ai-应用接口集成) |
-| **可靠性与工具交付** | 对 AI 修复设置重试与时间预算；提供运行快照、失败恢复、Python API、CLI 与 Web 入口。 | [系统架构](https://sunbos.github.io/sqlseed/architecture/) · [测试与 CI](https://github.com/sunbos/sqlseed/actions/workflows/ci.yml) · [版本发布](https://github.com/sunbos/sqlseed/releases) |
-
-公开项目链接可查看实现与验证记录；设备测试案例为已脱敏的非开源实践，以下单独标注。
+[sqlseed](https://github.com/sunbos/sqlseed) · [稳定性测试实践](#稳定性测试-harness--执行诊断与验证) · [能力与证据](#能力与证据) · [开源协作](#开源协作)
 
 ## 项目与实践
 
 ### sqlseed · 数据生成引擎与 AI 工作台
 
-**作者 / 维护者** · [项目](https://github.com/sunbos/sqlseed) · [架构](https://github.com/sunbos/sqlseed/blob/main/docs/architecture.md) · [AI 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [Core MCP](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed) · [AI MCP](https://github.com/sunbos/sqlseed/blob/main/plugins/sqlseed-ai/src/sqlseed_ai/mcp.py)
+**作者 / 维护者** · `SQLite / PostgreSQL` · `AI / MCP`
 
 为 SQLite / PostgreSQL 开发与测试场景生成可重复的数据。核心引擎离线运行，AI 作为可选的配置生成与修复能力；用户可先检查规则与样例，再确认写入。
 
-[快速开始（无需模型 API key）](https://github.com/sunbos/sqlseed/blob/main/README.zh-CN.md#快速开始) · [工作台指南](https://sunbos.github.io/sqlseed/web-workbench/) · [可复现订单示例](https://github.com/sunbos/sqlseed/tree/main/examples/order_workflow)
+[项目源码](https://github.com/sunbos/sqlseed) · [快速开始](https://github.com/sunbos/sqlseed/blob/main/README.zh-CN.md#快速开始) · [工作台指南](https://sunbos.github.io/sqlseed/web-workbench/)
 
 > **流程示意**：数据库结构与字段规则 → 配置校验、依赖检查和样例预览 → 生成并写入关联数据。
 
 <details>
 <summary>查看真实工作台截图与 AI / MCP 工程实现</summary>
+
+[系统架构](https://github.com/sunbos/sqlseed/blob/main/docs/architecture.md) · [AI 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [Core MCP](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed) · [AI MCP](https://github.com/sunbos/sqlseed/blob/main/plugins/sqlseed-ai/src/sqlseed_ai/mcp.py) · [订单示例](https://github.com/sunbos/sqlseed/tree/main/examples/order_workflow)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/sunbos/sqlseed/2c14563364f2e3a34038e14a0d2b37cabd0a2705/docs/assets/screenshots/web-workbench-zh-CN-dark.png">
@@ -69,8 +60,6 @@
 - **让执行结果可追溯**：绑定数据库身份、schema、配置版本与检查结果，保存运行快照并区分计划量和实际提交量；部分失败后，仅在计数明确时生成剩余数据计划。[运行记录](https://github.com/sunbos/sqlseed/blob/01b1584152aa1fc9f1135ea6add6fb1ab8c303be/plugins/sqlseed-web/src/sqlseed_web/workbench_runtime.py#L790)
 <!-- profile-ai:sqlseed-workbench:end -->
 
-</details>
-
 #### GemmaSQLSeed · sqlseed 的 AI Agent 参赛实践
 
 **2026.06 · GDG 上海 Gemma 4 开发者大赛 · AI Agent 赛道**
@@ -81,6 +70,29 @@
 
 [作品与技术报告](https://github.com/gdgshanghai/Gemma4-Hackathon-ShangHai/tree/main/submissions/2026/track_A/GemmaSQLSeed) · [首次提交 #19](https://github.com/gdgshanghai/Gemma4-Hackathon-ShangHai/pull/19) · [后续完善 #39](https://github.com/gdgshanghai/Gemma4-Hackathon-ShangHai/pull/39)
 
+</details>
+
+### 稳定性测试 Harness · 执行、诊断与验证
+
+**工程实践 · 非开源案例（脱敏）**
+
+将设备稳定性测试组织为可配置的动作与检查项，统一异常处理、环境恢复和诊断记录。通过 LangGraph 表达执行流程，模型辅助归因，程序依据采集事实判定结果。
+
+> **异常处理示意**：执行与采集 → 规则判定 → 环境恢复与辅助分析 → 结果和诊断记录。
+
+<details>
+<summary>查看模型边界、恢复机制与验证方式</summary>
+
+- **模型建议与测试判定分工**：LLM 提供结构化故障诊断和风险注解，通过／失败仍由规则和采集事实决定；模型不可用时回退规则诊断。
+- **工具与恢复边界**：区分测试、诊断与环境恢复的职责，限制工具的适用阶段，并保留恢复动作记录。
+- **诊断经验可追溯**：可按场景归档诊断，并将历史摘要用于后续风险先验，同时限制先验的影响范围。
+- **离线验证**：通过 FakeClient 和图执行测试检查流程、能力依赖、诊断降级及模型不翻转规则判定的通过／失败结果这一边界。
+
+</details>
+
+<details>
+<summary>更多项目实践：Python SDK 与设备事件校验</summary>
+
 ### ezviz-openapi-utils · Python SDK 与设备 API 集成
 
 **作者 / 维护者** · [项目](https://github.com/sunbos/ezviz-openapi-utils) · [中文文档](https://github.com/sunbos/ezviz-openapi-utils/blob/main/README.zh-CN.md) · [PyPI](https://pypi.org/project/ezviz-openapi-utils/)
@@ -89,19 +101,6 @@
 
 - **接口与错误处理**：认证客户端负责令牌与请求会话，API 层封装设备操作，以自定义异常表达认证失败、API 错误与设备能力限制。[认证客户端](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/src/ezviz_openapi_utils/client.py#L20) · [API 实现](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/src/ezviz_openapi_utils/api.py#L67)
 - **类型与验证入口**：为令牌响应定义 TypedDict，提供认证相关测试用例；真实接口测试需要配置凭据。[令牌响应类型](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/src/ezviz_openapi_utils/oauth.py#L29) · [测试用例](https://github.com/sunbos/ezviz-openapi-utils/blob/25cd41321d244592b4f5c9250b13443e5502129d/tests/test_client.py#L31)
-
-### 设备稳定性测试 Agent · LangGraph 与确定性测试协作
-
-**工程实践 · 非开源案例（脱敏）**
-
-将设备稳定性测试拆成可配置的动作、检查项与 LangGraph 状态图，处理长时间运行中的异常检测、故障归因与环境恢复。
-
-> **异常处理示意**：执行测试动作 → 并行采集状态与事件、规则判定、Agent 归因 → 输出失败结果与诊断信息。
-
-- **模型建议与测试判定分工**：LLM 提供结构化故障诊断和风险注解，通过／失败仍由规则和采集事实决定；模型不可用时回退规则诊断。
-- **按阶段限制工具**：测试循环提供查询与探测工具，环境恢复工具仅在相应阶段开放，恢复动作进入诊断记录。
-- **诊断经验可追溯**：可按场景归档诊断，并将历史摘要用于后续风险先验，同时限制先验的影响范围。
-- **离线验证**：通过 FakeClient 和图执行测试检查流程、能力依赖、诊断降级及模型不翻转规则判定的通过／失败结果这一边界。
 
 ### 多协议设备事件校验 · Python 与 Dify Workflow
 
@@ -114,6 +113,16 @@
 - **分层校验**：程序处理事件采集、能力预检和基础核对，模型参与复杂事件内容分析。
 - **工作流工具化**：将准备环境、构造测试数据和触发操作拆成可组合的工作流，提供统一的 Python 调用入口。
 - **运行约束**：处理查询限流、超时、设备能力差异，并将判定结果写回统一记录。
+
+</details>
+
+## 能力与证据
+
+- **上下文与工具接口**：从数据库 schema 组织模型上下文，通过 MCP 暴露可调用能力。[sqlseed AI](https://github.com/sunbos/sqlseed/tree/main/plugins/sqlseed-ai) · [MCP 实现](https://github.com/sunbos/sqlseed/tree/main/plugins/mcp-server-sqlseed)
+- **执行验证与反馈**：校验模型输出，处理重试预算、运行快照与失败恢复。[系统架构](https://sunbos.github.io/sqlseed/architecture/) · [测试与 CI](https://github.com/sunbos/sqlseed/actions/workflows/ci.yml)
+- **Python API / SDK 工程**：分层封装认证与业务接口，维护类型、错误语义及同步／异步调用。[EZVIZ SDK](https://github.com/sunbos/ezviz-openapi-utils) · [Dify SDK 贡献](#dify-python-sdk--ai-应用接口集成)
+
+公开项目提供源码与验证入口；设备测试实践仅展示脱敏内容。
 
 ## 开源协作
 
@@ -152,7 +161,7 @@
 <details>
 <summary>展开技术选型、组件使用与关注项目</summary>
 
-从我的 Star 中精选，围绕 **Python 数据与测试、Agent 工作流、MCP 与文档处理**。已用于项目的部分附实践依据，其余记录具体关注点。
+从我的 Star 中精选，围绕 **Python 数据与测试、Agent 工具、MCP 与文档处理**。已用于项目的部分附实践依据，其余记录具体关注点。
 
 | 项目 | 关系 | 关注点与实践 |
 | --- | --- | --- |
