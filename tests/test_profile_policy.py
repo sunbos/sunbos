@@ -17,7 +17,7 @@ class ProfilePolicyTests(unittest.TestCase):
         cls.fixed = protected_text(cls.readme, cls.config)
 
     def test_anonymized_cases_are_entirely_outside_model_input(self):
-        start = self.readme.index('### 设备稳定性测试 Agent')
+        start = self.readme.index('### 稳定性测试 Harness')
         end = self.readme.index('## 开源协作')
         cases = self.readme[start:end]
         self.assertIn(cases, self.fixed)
